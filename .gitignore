@@ -1,0 +1,8 @@
+node_modules
+dist
+.DS_Store
+*.log
+.cache
+# the built demo dataset (atlas.json, embeddings.bin, atlas.png) IS committed so the
+# project runs on clone without a rebuild. Only the intermediate thumbnails are ignored:
+public/data/thumbs/

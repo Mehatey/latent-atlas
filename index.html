@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>Latent Atlas &mdash; a museum, by meaning</title>
+    <meta name="description" content="An explorable WebGPU galaxy of 1500 real Met artworks, embedded with CLIP. Type a phrase and a model running in your browser flies you to the matching art by meaning." />
+    <meta property="og:title" content="Latent Atlas &mdash; a museum, by meaning" />
+    <meta property="og:description" content="1500 Met artworks embedded with CLIP, explorable in 3D. In-browser semantic search on WebGPU." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="./docs/cover.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>&#9657;</text></svg>" />
+    <link rel="preconnect" href="https://images.metmuseum.org" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="scene" aria-hidden="true"></canvas>
+    <div id="cursor-aura" aria-hidden="true"></div>
+    <div id="grain" aria-hidden="true"></div>
+
+    <main id="experience" aria-label="Latent Atlas interactive art collection">
+      <section id="arrival" aria-labelledby="arrival-title">
+        <p class="eyebrow"><span></span> The Metropolitan Museum of Art / open collection</p>
+        <h1 id="arrival-title"><i>Latent</i><br />Atlas</h1>
+        <p class="arrival-copy">A museum, rearranged by machine perception.<br />Follow an idea, not a label.</p>
+        <div class="arrival-actions">
+          <button id="enter" type="button">enter the field <b>↗</b></button>
+          <span class="arrival-note">1,500 works · 512 dimensions · in your browser</span>
+        </div>
+        <div class="prompt-bank" aria-label="Suggested semantic searches">
+          <span>begin with a feeling</span>
+          <button type="button" data-query="storms at sea">storms at sea</button>
+          <button type="button" data-query="gold and shadow">gold and shadow</button>
+          <button type="button" data-query="a quiet interior">a quiet interior</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Met logo top-left -->
+    <a id="met-logo-link" href="https://www.metmuseum.org" target="_blank" rel="noopener">
+      <img id="met-logo" src="/met-logo.png" alt="The Met" />
+    </a>
+
+    <!-- search top-right -->
+    <form id="search" autocomplete="off">
+      <label class="sr-only" for="q">Search the collection by meaning</label>
+      <input id="q" type="text" placeholder="" aria-describedby="model-status" />
+      <button type="submit" id="go" aria-label="Search the collection">&#8594;</button>
+      <span id="model-status" class="status" aria-live="polite"></span>
+    </form>
+
+    <!-- result count, above the matches strip -->
+    <div id="result-count" hidden></div>
+
+    <!-- top matches strip -->
+    <div id="results" hidden></div>
+
+    <!-- search result navigation arrows -->
+    <button id="nav-prev" hidden aria-label="Previous result">&#8592;</button>
+    <button id="nav-next" hidden aria-label="Next result">&#8594;</button>
+
+    <!-- artwork detail card - positioned by JS below the hovered/focused work -->
+    <aside id="card" hidden>
+      <h2 id="card-title"></h2>
+      <p id="card-artist"></p>
+      <p id="card-desc"></p>
+      <p id="card-meta"></p>
+      <button id="card-similar" type="button">explore this constellation <b>↗</b></button>
+      <a id="card-link" target="_blank" rel="noopener">view at the Met &#8599;</a>
+    </aside>
+
+    <!-- loading -->
+    <div id="loader"><div class="bar"><i></i></div><span id="loader-text">loading the collection...</span></div>
+
+    <button id="sound-toggle" type="button" aria-pressed="false" aria-label="Enable sound">sound off</button>
+    <button id="share-view" type="button" hidden>copy this view</button>
+    <button id="guide-toggle" type="button" aria-expanded="false" aria-controls="field-guide">how to explore</button>
+    <aside id="field-guide" hidden aria-label="How to explore Latent Atlas">
+      <button id="guide-close" type="button" aria-label="Close exploration guide">×</button>
+      <p class="guide-kicker">field notes / 01</p>
+      <h2>Follow the <i>feeling.</i></h2>
+      <ol>
+        <li><b>01</b><span>Type an idea. CLIP compares its meaning against every artwork.</span></li>
+        <li><b>02</b><span>Click a work to reveal its nearest visual neighbours.</span></li>
+        <li><b>03</b><span>Orbit freely. This map is a projection, not a category system.</span></li>
+      </ol>
+      <p class="guide-footer">esc returns you to the full field</p>
+    </aside>
+
+    <footer id="legend" aria-label="Interaction controls">
+      drag to orbit <span>·</span> scroll to zoom <span>·</span> click a work to focus <span>·</span> esc to return
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
