@@ -114,16 +114,21 @@
           </div>
         </section>
 
+        <div id="ar-return-toast" class="ar-return-toast glass" hidden role="status">
+          <span><b>Back from AR</b><small>Your object and six related works are still here.</small></span>
+          <button id="return-related" type="button">View related</button>
+        </div>
+
         <div class="gesture-hint glass" aria-hidden="true">
           <span>↔</span> Drag to orbit <i></i> <span>⌁</span> Pinch to scale
         </div>
 
         <div class="launch-dock glass">
           <button id="previous-work" class="round-button" type="button" aria-label="Previous 3D scan">←</button>
-          <a id="ar-launch" class="ar-launch" rel="ar" href="./ar/met-3d/lion-sarcophagus.usdz">
+          <a id="ar-launch" class="ar-launch" rel="ar" href="./ar/met-3d/lion-sarcophagus.usdz#allowsContentScaling=1&amp;callToAction=View%20at%20The%20Met&amp;checkoutTitle=Lion%20Sarcophagus&amp;checkoutSubtitle=Roman%20%C2%B7%203rd%20century&amp;canonicalWebPageURL=https%3A%2F%2Fwww.metmuseum.org%2Fart%2Fcollection%2Fsearch%2F854888">
             <img id="ar-launch-image" src="./ar/met-3d/lion-sarcophagus.jpg" alt="" />
             <span class="ar-icon" aria-hidden="true">⌗</span>
-            <span><b>Place in AR</b><small>View at life scale</small></span>
+            <span><b>Place in AR</b><small>Title + Met link included</small></span>
           </a>
           <button id="next-work" class="round-button" type="button" aria-label="Next 3D scan">→</button>
         </div>
@@ -170,7 +175,7 @@
               <li><b>2</b> Move phone to find a floor</li>
               <li><b>3</b> Pinch, rotate, or walk around</li>
             </ol>
-            <p>Return to Safari to choose another scan.</p>
+            <p>Apple Quick Look opens full-screen. Its native card identifies the work and links to The Met. Return to Safari for arrows and related works.</p>
           </div>
         </article>
       </section>

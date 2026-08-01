@@ -411,6 +411,44 @@ model-viewer.is-loaded .progress { opacity: 0; }
 .related-loading { min-height: 82px; width: 100%; display: grid; place-items: center; color: var(--muted); font-size: .75rem; }
 .related-loading.is-error { color: #ffd6d6; }
 
+.ar-return-toast {
+  position: absolute;
+  z-index: 9;
+  top: 6.6rem;
+  left: 50%;
+  width: min(28rem, calc(100% - 2rem));
+  min-height: 64px;
+  padding: .55rem .55rem .55rem .9rem;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  opacity: 0;
+  transform: translate(-50%, -8px);
+  transition: opacity .2s ease, transform .24s var(--ease);
+}
+.ar-return-toast[hidden] { display: none; }
+.ar-return-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+.ar-return-toast > span { min-width: 0; display: grid; gap: .18rem; }
+.ar-return-toast b { font-size: .8rem; }
+.ar-return-toast small { overflow: hidden; color: var(--muted); font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
+.ar-return-toast button {
+  flex: none;
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 .9rem;
+  background: var(--accent);
+  color: #0b0c0f;
+  font-size: .72rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: transform .12s ease, filter .18s ease;
+}
+.ar-return-toast button:hover { filter: brightness(1.05); }
+.ar-return-toast button:active { transform: scale(.96); }
+
 .collection-panel { padding: 2rem .25rem 0; }
 .collection-heading { display: flex; justify-content: space-between; align-items: end; gap: 2rem; margin-bottom: 1rem; }
 .collection-heading h2 { margin: 0; font-size: 1.6rem; letter-spacing: -.025em; }
@@ -488,6 +526,7 @@ footer { width: min(1440px, 100%); min-height: 90px; margin: 0 auto; padding: 1.
   .gesture-hint { bottom: 6rem; }
   .launch-dock { bottom: max(.75rem, env(safe-area-inset-bottom)); width: calc(100% - 1.5rem); }
   .related-panel { left: .75rem; right: .75rem; bottom: 5.75rem; max-height: 55%; padding: .85rem; border-radius: 16px; }
+  .ar-return-toast { top: 5.7rem; }
   .related-card { flex-basis: min(78vw, 270px); grid-template-columns: 84px minmax(0, 1fr); }
   .related-card img { width: 84px; height: 84px; }
   .related-card b { font-size: .84rem; }

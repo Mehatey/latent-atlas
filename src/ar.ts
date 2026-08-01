@@ -17,6 +17,7 @@ type AtlasPoint = {
   artist: string;
   date: string;
   medium: string;
+  image: string;
   pos: [number, number, number];
 };
 
@@ -79,6 +80,8 @@ const description = document.querySelector("#work-description") as HTMLElement;
 const metLink = document.querySelector("#met-link") as HTMLAnchorElement;
 const launch = document.querySelector("#ar-launch") as HTMLAnchorElement;
 const launchImage = document.querySelector("#ar-launch-image") as HTMLImageElement;
+const returnToast = document.querySelector("#ar-return-toast") as HTMLElement;
+const returnRelated = document.querySelector("#return-related") as HTMLButtonElement;
 const previous = document.querySelector("#previous-work") as HTMLButtonElement;
 const next = document.querySelector("#next-work") as HTMLButtonElement;
 const drift = document.querySelector("#drift-toggle") as HTMLButtonElement;
@@ -107,9 +110,24 @@ let driftActive = true;
 let introTimer = 0;
 let atlasPoints: AtlasPoint[] | null = null;
 let relatedRequest = 0;
+let arSessionStarted = false;
+let arBecameHidden = false;
+let returnToastTimer = 0;
 
 function path(scan: Scan, extension: "glb" | "usdz" | "jpg") {
   return `./ar/met-3d/${scan.slug}.${extension}`;
+}
+
+function metUrl(scan: Scan) {
+  return `https://www.metmuseum.org/art/collection/search/${scan.id}`;
+}
+
+function quickLookUrl(scan: Scan) {
+  const title = encodeURIComponent(scan.title);
+  const subtitle = encodeURIComponent(`${scan.artist} · ${scan.date}`);
+  const action = encodeURIComponent("View at The Met");
+  const canonical = encodeURIComponent(metUrl(scan));
+  return `${path(scan, "usdz")}#allowsContentScaling=1&callToAction=${action}&checkoutTitle=${title}&checkoutSubtitle=${subtitle}&canonicalWebPageURL=${canonical}`;
 }
 
 function isiOS() {
@@ -152,6 +170,16 @@ function selectRelated(point: AtlasPoint, card: HTMLButtonElement) {
   relatedMetLink.hidden = false;
 }
 
+function showReturnToast() {
+  window.clearTimeout(returnToastTimer);
+  returnToast.hidden = false;
+  requestAnimationFrame(() => returnToast.classList.add("is-visible"));
+  returnToastTimer = window.setTimeout(() => {
+    returnToast.classList.remove("is-visible");
+    window.setTimeout(() => { returnToast.hidden = true; }, reducedMotion.matches ? 0 : 220);
+  }, 5200);
+}
+
 async function renderRelated() {
   const request = ++relatedRequest;
   relatedList.innerHTML = `<div class="related-loading" role="status">Finding nearby works…</div>`;
@@ -184,6 +212,10 @@ async function renderRelated() {
         <img src="./data/thumbs/${index}.jpg" alt="" loading="lazy" decoding="async" />
         <span><b>${point.title}</b><small>${point.artist || point.medium || "The Met"}</small></span>
       `;
+      const image = card.querySelector("img") as HTMLImageElement;
+      image.addEventListener("error", () => {
+        if (point.image && image.src !== point.image) image.src = point.image;
+      }, { once: true });
       card.addEventListener("click", () => selectRelated(point, card));
       relatedList.append(card);
       if (neighborIndex === 0) selectRelated(point, card);
@@ -209,9 +241,9 @@ function selectScan(index: number) {
   meta.textContent = `${scan.artist} · ${scan.date} · ${scan.medium}`;
   description.textContent = scan.description;
   position.textContent = `${current + 1} / ${scans.length}`;
-  metLink.href = `https://www.metmuseum.org/art/collection/search/${scan.id}`;
+  metLink.href = metUrl(scan);
   metLink.textContent = `View object ${scan.id} at The Met ↗`;
-  launch.href = path(scan, "usdz");
+  launch.href = quickLookUrl(scan);
   launchImage.src = path(scan, "jpg");
 
   options.forEach((option, optionIndex) => {
@@ -276,9 +308,40 @@ relatedToggle.addEventListener("click", () => setRelatedOpen(relatedPanel.hidden
 closeRelated.addEventListener("click", () => setRelatedOpen(false));
 
 launch.addEventListener("click", async (event) => {
-  if (isiOS()) return;
+  if (isiOS()) {
+    arSessionStarted = true;
+    arBecameHidden = false;
+    return;
+  }
   event.preventDefault();
   await viewer.activateAR?.();
+});
+
+launch.addEventListener("message", (event: Event) => {
+  if ((event as MessageEvent).data === "_apple_ar_quicklook_button_tapped") {
+    window.location.href = metUrl(scans[current]);
+  }
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!arSessionStarted) return;
+  if (document.hidden) {
+    arBecameHidden = true;
+    return;
+  }
+  if (arBecameHidden) {
+    arSessionStarted = false;
+    arBecameHidden = false;
+    setRelatedOpen(true);
+    showReturnToast();
+  }
+});
+
+returnRelated.addEventListener("click", () => {
+  window.clearTimeout(returnToastTimer);
+  returnToast.classList.remove("is-visible");
+  returnToast.hidden = true;
+  setRelatedOpen(true);
 });
 
 viewer.addEventListener("progress", (event: Event) => {
