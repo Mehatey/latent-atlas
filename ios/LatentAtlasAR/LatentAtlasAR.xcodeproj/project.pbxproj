@@ -1,0 +1,254 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 60;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B10000000000000000000001 /* LatentAtlasARApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000001 /* LatentAtlasARApp.swift */; };
+		B10000000000000000000002 /* Artwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000002 /* Artwork.swift */; };
+		B10000000000000000000003 /* ARViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000003 /* ARViewModel.swift */; };
+		B10000000000000000000004 /* ARSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000004 /* ARSessionView.swift */; };
+		B10000000000000000000005 /* BundleImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000005 /* BundleImage.swift */; };
+		B10000000000000000000006 /* RelatedWorksShelf.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000006 /* RelatedWorksShelf.swift */; };
+		B10000000000000000000007 /* ARExperienceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000007 /* ARExperienceView.swift */; };
+		B10000000000000000000008 /* Resources in Resources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000009 /* Resources */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		F10000000000000000000001 /* LatentAtlasARApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LatentAtlasARApp.swift; sourceTree = "<group>"; };
+		F10000000000000000000002 /* Artwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Artwork.swift; sourceTree = "<group>"; };
+		F10000000000000000000003 /* ARViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARViewModel.swift; sourceTree = "<group>"; };
+		F10000000000000000000004 /* ARSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARSessionView.swift; sourceTree = "<group>"; };
+		F10000000000000000000005 /* BundleImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleImage.swift; sourceTree = "<group>"; };
+		F10000000000000000000006 /* RelatedWorksShelf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelatedWorksShelf.swift; sourceTree = "<group>"; };
+		F10000000000000000000007 /* ARExperienceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARExperienceView.swift; sourceTree = "<group>"; };
+		F10000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F10000000000000000000009 /* Resources */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Resources; sourceTree = "<group>"; };
+		F10000000000000000000010 /* LatentAtlasAR.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LatentAtlasAR.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		P10000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		G10000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				G10000000000000000000002 /* LatentAtlasAR */,
+				G10000000000000000000006 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		G10000000000000000000002 /* LatentAtlasAR */ = {
+			isa = PBXGroup;
+			children = (
+				F10000000000000000000001 /* LatentAtlasARApp.swift */,
+				G10000000000000000000003 /* Models */,
+				G10000000000000000000004 /* AR */,
+				G10000000000000000000005 /* Views */,
+				F10000000000000000000009 /* Resources */,
+				F10000000000000000000008 /* Info.plist */,
+			);
+			path = LatentAtlasAR;
+			sourceTree = "<group>";
+		};
+		G10000000000000000000003 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				F10000000000000000000002 /* Artwork.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		G10000000000000000000004 /* AR */ = {
+			isa = PBXGroup;
+			children = (
+				F10000000000000000000003 /* ARViewModel.swift */,
+				F10000000000000000000004 /* ARSessionView.swift */,
+			);
+			path = AR;
+			sourceTree = "<group>";
+		};
+		G10000000000000000000005 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				F10000000000000000000005 /* BundleImage.swift */,
+				F10000000000000000000006 /* RelatedWorksShelf.swift */,
+				F10000000000000000000007 /* ARExperienceView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		G10000000000000000000006 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F10000000000000000000010 /* LatentAtlasAR.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		T10000000000000000000001 /* LatentAtlasAR */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C10000000000000000000002 /* Build configuration list for PBXNativeTarget "LatentAtlasAR" */;
+			buildPhases = (
+				P10000000000000000000001 /* Sources */,
+				P10000000000000000000002 /* Frameworks */,
+				P10000000000000000000003 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = LatentAtlasAR;
+			productName = LatentAtlasAR;
+			productReference = F10000000000000000000010 /* LatentAtlasAR.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		PR1000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					T10000000000000000000001 = { CreatedOnToolsVersion = 16.0; };
+				};
+			};
+			buildConfigurationList = C10000000000000000000001 /* Build configuration list for PBXProject "LatentAtlasAR" */;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base);
+			mainGroup = G10000000000000000000001;
+			productRefGroup = G10000000000000000000006 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (T10000000000000000000001 /* LatentAtlasAR */);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		P10000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (B10000000000000000000008 /* Resources in Resources */);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		P10000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000000000000000000001 /* LatentAtlasARApp.swift in Sources */,
+				B10000000000000000000002 /* Artwork.swift in Sources */,
+				B10000000000000000000003 /* ARViewModel.swift in Sources */,
+				B10000000000000000000004 /* ARSessionView.swift in Sources */,
+				B10000000000000000000005 /* BundleImage.swift in Sources */,
+				B10000000000000000000006 /* RelatedWorksShelf.swift in Sources */,
+				B10000000000000000000007 /* ARExperienceView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		D10000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+		};
+			name = Debug;
+		};
+		D10000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		D10000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LatentAtlasAR/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.siddharthmehta.latentatlasar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D10000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LatentAtlasAR/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.siddharthmehta.latentatlasar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C10000000000000000000001 /* Build configuration list for PBXProject "LatentAtlasAR" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (D10000000000000000000001 /* Debug */, D10000000000000000000002 /* Release */);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C10000000000000000000002 /* Build configuration list for PBXNativeTarget "LatentAtlasAR" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (D10000000000000000000003 /* Debug */, D10000000000000000000004 /* Release */);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = PR1000000000000000000001 /* Project object */;
+}
