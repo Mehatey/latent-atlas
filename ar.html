@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#090a0d" />
+    <title>Latent Atlas / Objects in Space</title>
+    <meta name="description" content="Place verified Met Open Access 3D scans in your space." />
+    <link rel="stylesheet" href="/src/ar.css" />
+  </head>
+  <body class="is-intro">
+    <section id="brand-intro" aria-label="Latent Atlas introduction">
+      <div class="intro-orbit" aria-hidden="true">
+        <img src="./ar/met-3d/lion-sarcophagus.jpg" alt="" />
+        <img src="./ar/met-3d/nayarit-house.jpg" alt="" />
+        <img src="./ar/met-3d/aphrodite-eros.jpg" alt="" />
+        <img src="./ar/met-3d/ngya-post.jpg" alt="" />
+      </div>
+      <div class="intro-lockup">
+        <span>LATENT ATLAS</span>
+        <h1>Objects<br /><i>in space.</i></h1>
+        <p>Verified 3D scans from The Met Open Access collection</p>
+      </div>
+      <button id="skip-intro" type="button">Enter AR collection</button>
+    </section>
+
+    <header class="topbar glass">
+      <a class="wordmark" href="./"><i>Latent</i> Atlas</a>
+      <div class="mode-label"><span></span> AR collection</div>
+      <a class="atlas-link" href="./">Full atlas <span>↗</span></a>
+    </header>
+
+    <main class="ar-app">
+      <section class="viewer-shell" aria-label="Interactive 3D scan viewer">
+        <model-viewer
+          id="viewer"
+          src="./ar/met-3d/lion-sarcophagus.glb"
+          ios-src="./ar/met-3d/lion-sarcophagus.usdz"
+          poster="./ar/met-3d/lion-sarcophagus.jpg"
+          alt="Interactive 3D model of a Roman marble sarcophagus"
+          ar
+          ar-modes="webxr scene-viewer quick-look"
+          ar-placement="floor"
+          camera-controls
+          auto-rotate
+          rotation-per-second="4deg"
+          touch-action="pan-y"
+          shadow-intensity="1"
+          shadow-softness=".8"
+          exposure="1"
+          environment-image="neutral"
+          camera-orbit="28deg 72deg 110%"
+          min-camera-orbit="auto 45deg auto"
+          max-camera-orbit="auto 105deg auto"
+          interpolation-decay="120"
+          interaction-prompt="none"
+        >
+          <button class="native-ar-button" slot="ar-button">Place in AR</button>
+          <div class="progress" slot="progress-bar"><i></i></div>
+        </model-viewer>
+
+        <div class="object-state glass" aria-live="polite">
+          <span class="verified"><i></i> Verified Met 3D scan</span>
+          <h2 id="work-title">Lion Sarcophagus</h2>
+          <p id="work-meta">Roman · 3rd century · Marble</p>
+        </div>
+
+        <div class="viewer-controls glass" role="group" aria-label="3D viewer controls">
+          <button id="drift-toggle" class="is-active" type="button" aria-pressed="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.34-5.66M4 4v6h6" /></svg>
+            <span>Auto orbit</span>
+          </button>
+          <button id="reset-view" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l5 5v8l-5 5H8l-5-5V8zM8 3v5h8V3M8 21v-5h8v5" /></svg>
+            <span>Reset</span>
+          </button>
+          <button id="info-toggle" type="button" aria-expanded="false" aria-controls="context-panel">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5" /></svg>
+            <span>Info</span>
+          </button>
+          <button id="related-toggle" type="button" aria-expanded="false" aria-controls="related-panel">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="7" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="15" cy="18" r="2.5"/><path d="m8.4 6.8 7.1-.6M7.4 9.1l6.2 6.8M17.4 8.4l-1.7 7" /></svg>
+            <span>Related</span>
+          </button>
+        </div>
+
+        <div id="viewer-loading" class="viewer-loading" role="status">
+          <span class="load-orbit"></span>
+          <strong>Loading 3D scan</strong>
+          <small id="load-percent">0%</small>
+        </div>
+
+        <div id="viewer-error" class="viewer-error glass" hidden role="alert">
+          <strong>3D scan could not load</strong>
+          <span>Keep this page open and try again.</span>
+          <button id="retry-model" type="button">Retry</button>
+        </div>
+
+        <section id="related-panel" class="related-panel glass" hidden aria-label="Related works from the atlas">
+          <header>
+            <div>
+              <h3>Related in the atlas</h3>
+              <p>Persistent neighbors arranged by resemblance</p>
+            </div>
+            <button id="close-related" type="button" aria-label="Close related works">×</button>
+          </header>
+          <div id="related-list" class="related-list" role="list"></div>
+          <div class="related-detail" aria-live="polite">
+            <div>
+              <strong id="related-title">Choose a related work</strong>
+              <span id="related-meta">Its details will stay here.</span>
+            </div>
+            <a id="related-met-link" href="#" target="_blank" rel="noopener" hidden>View at The Met ↗</a>
+          </div>
+        </section>
+
+        <div class="gesture-hint glass" aria-hidden="true">
+          <span>↔</span> Drag to orbit <i></i> <span>⌁</span> Pinch to scale
+        </div>
+
+        <div class="launch-dock glass">
+          <button id="previous-work" class="round-button" type="button" aria-label="Previous 3D scan">←</button>
+          <a id="ar-launch" class="ar-launch" rel="ar" href="./ar/met-3d/lion-sarcophagus.usdz">
+            <img id="ar-launch-image" src="./ar/met-3d/lion-sarcophagus.jpg" alt="" />
+            <span class="ar-icon" aria-hidden="true">⌗</span>
+            <span><b>Place in AR</b><small>View at life scale</small></span>
+          </a>
+          <button id="next-work" class="round-button" type="button" aria-label="Next 3D scan">→</button>
+        </div>
+      </section>
+
+      <section class="collection-panel">
+        <div class="collection-heading">
+          <div>
+            <h2>Choose an object</h2>
+            <p>Four genuine Met scans. Select, inspect, then place.</p>
+          </div>
+          <span id="scan-position" aria-live="polite">1 / 4</span>
+        </div>
+
+        <nav class="scan-rail" aria-label="Choose a verified Met 3D scan">
+          <button class="scan-option is-active" data-work="0" aria-current="true">
+            <img src="./ar/met-3d/lion-sarcophagus.jpg" alt="Marble sarcophagus with lions" />
+            <span><b>Lion Sarcophagus</b><small>Roman · Marble</small></span>
+          </button>
+          <button class="scan-option" data-work="1">
+            <img src="./ar/met-3d/nayarit-house.jpg" alt="Nayarit ceramic house model" />
+            <span><b>Nayarit House</b><small>200 BCE–300 CE · Ceramic</small></span>
+          </button>
+          <button class="scan-option" data-work="2">
+            <img src="./ar/met-3d/aphrodite-eros.jpg" alt="Limestone statue of Aphrodite and Eros" />
+            <span><b>Aphrodite + Eros</b><small>Cypriot · Limestone</small></span>
+          </button>
+          <button class="scan-option" data-work="3">
+            <img src="./ar/met-3d/ngya-post.jpg" alt="Ngya commemorative post" />
+            <span><b>Ngya</b><small>Bongo · Mahogany</small></span>
+          </button>
+        </nav>
+
+        <article id="context-panel" class="context-panel glass">
+          <div class="context-copy">
+            <span>About this object</span>
+            <p id="work-description">Lions grasp antelope at either end of a Roman sarcophagus, now readable as a complete object in space.</p>
+            <a id="met-link" href="https://www.metmuseum.org/art/collection/search/854888" target="_blank" rel="noopener">View object 854888 at The Met ↗</a>
+          </div>
+          <div class="ar-steps">
+            <span>On iPhone</span>
+            <ol>
+              <li><b>1</b> Tap <strong>Place in AR</strong></li>
+              <li><b>2</b> Move phone to find a floor</li>
+              <li><b>3</b> Pinch, rotate, or walk around</li>
+            </ol>
+            <p>Return to Safari to choose another scan.</p>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer>
+      <span>The Metropolitan Museum of Art · Open Access / CC0</span>
+      <span>3D scans served as GLB + USDZ</span>
+    </footer>
+
+    <script type="module" src="/src/ar.ts"></script>
+  </body>
+</html>
