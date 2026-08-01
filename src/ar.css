@@ -167,6 +167,35 @@ a { color: inherit; }
   filter: blur(18px);
   pointer-events: none;
 }
+.viewer-shell::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  bottom: 17%;
+  width: min(52%, 32rem);
+  aspect-ratio: 3 / 1;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(218, 222, 232, .16), rgba(80, 86, 100, .06) 48%, transparent 72%);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .12);
+  filter: blur(.5px);
+  pointer-events: none;
+}
+.viewer-poster {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: clamp(7rem, 16vh, 10rem) clamp(4rem, 17vw, 15rem) clamp(7rem, 17vh, 11rem);
+  object-fit: contain;
+  opacity: .78;
+  filter: saturate(.82) contrast(1.03);
+  transition: opacity .32s ease, transform .48s var(--ease), filter .32s ease;
+  pointer-events: none;
+}
+.viewer-shell.has-live-model .viewer-poster { opacity: 0; transform: scale(.985); filter: blur(5px); }
 model-viewer {
   position: absolute;
   inset: 0;
@@ -515,6 +544,7 @@ footer { width: min(1440px, 100%); min-height: 90px; margin: 0 auto; padding: 1.
   .wordmark { font-size: 1.2rem; }
   .ar-app { padding: .5rem; }
   .viewer-shell { height: calc(100dvh - 86px); min-height: 580px; max-height: 790px; border-radius: 20px; }
+  .viewer-poster { padding: 8.5rem 4.25rem 7.5rem; opacity: .9; }
   .object-state { top: .75rem; left: .75rem; width: calc(100% - 5.35rem); padding: .8rem .9rem; border-radius: 14px; }
   .object-state h2 { margin-top: .4rem; font-size: clamp(1.35rem, 6vw, 2rem); }
   .object-state p { font-size: .73rem; }
@@ -549,6 +579,7 @@ footer { width: min(1440px, 100%); min-height: 90px; margin: 0 auto; padding: 1.
 @media (max-width: 480px) {
   .atlas-link { font-size: .74rem; }
   .viewer-shell { min-height: 540px; }
+  .viewer-poster { padding: 8.25rem 2.75rem 7.25rem; }
   .object-state { width: calc(100% - 4.8rem); }
   .object-state h2 { font-size: 1.32rem; }
   .object-state p { max-width: 36ch; }

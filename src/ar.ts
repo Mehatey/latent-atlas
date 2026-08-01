@@ -25,7 +25,7 @@ const scans: Scan[] = [
   {
     id: 854888,
     slug: "lion-sarcophagus",
-    title: "Lion Sarcophagus",
+    title: "Marble Sarcophagus with Lions Felling Antelope",
     artist: "Roman",
     date: "3rd century",
     medium: "Marble",
@@ -35,7 +35,7 @@ const scans: Scan[] = [
   {
     id: 312581,
     slug: "nayarit-house",
-    title: "Nayarit House",
+    title: "House Model",
     artist: "Nayarit artist(s)",
     date: "200 BCE–300 CE",
     medium: "Ceramic, slip",
@@ -45,7 +45,7 @@ const scans: Scan[] = [
   {
     id: 242017,
     slug: "aphrodite-eros",
-    title: "Aphrodite + Eros",
+    title: "Limestone Statue of Aphrodite Holding Winged Eros",
     artist: "Cypriot",
     date: "late 4th century BCE",
     medium: "Limestone",
@@ -55,7 +55,7 @@ const scans: Scan[] = [
   {
     id: 309909,
     slug: "ngya-post",
-    title: "Ngya",
+    title: "Ngya (Commemorative Post)",
     artist: "Bongo artist",
     date: "late 19th century",
     medium: "Mahogany",
@@ -74,6 +74,7 @@ const viewer = document.querySelector("#viewer") as HTMLElement & {
   activateAR?: () => Promise<void>;
 };
 const shell = document.querySelector(".viewer-shell") as HTMLElement;
+const poster = document.querySelector("#viewer-poster") as HTMLImageElement;
 const title = document.querySelector("#work-title") as HTMLElement;
 const meta = document.querySelector("#work-meta") as HTMLElement;
 const description = document.querySelector("#work-description") as HTMLElement;
@@ -98,6 +99,8 @@ const context = document.querySelector("#context-panel") as HTMLElement;
 const loading = document.querySelector("#viewer-loading") as HTMLElement;
 const loadPercent = document.querySelector("#load-percent") as HTMLElement;
 const error = document.querySelector("#viewer-error") as HTMLElement;
+const errorTitle = document.querySelector("#viewer-error-title") as HTMLElement;
+const errorCopy = document.querySelector("#viewer-error-copy") as HTMLElement;
 const retry = document.querySelector("#retry-model") as HTMLButtonElement;
 const position = document.querySelector("#scan-position") as HTMLElement;
 const options = [...document.querySelectorAll<HTMLButtonElement>(".scan-option")];
@@ -113,9 +116,11 @@ let relatedRequest = 0;
 let arSessionStarted = false;
 let arBecameHidden = false;
 let returnToastTimer = 0;
+let modelLoadTimer = 0;
 
 function path(scan: Scan, extension: "glb" | "usdz" | "jpg") {
-  return `./ar/met-3d/${scan.slug}.${extension}`;
+  const suffix = extension === "usdz" ? "-gallery.usdz" : `.${extension}`;
+  return `./ar/met-3d/${scan.slug}${suffix}`;
 }
 
 function metUrl(scan: Scan) {
@@ -145,11 +150,20 @@ function closeIntro() {
 }
 
 function showLoading() {
+  window.clearTimeout(modelLoadTimer);
   error.hidden = true;
   loading.hidden = false;
   loadPercent.textContent = "0%";
   viewer.classList.remove("is-loaded");
   shell.classList.add("is-changing");
+  shell.classList.remove("has-live-model");
+  modelLoadTimer = window.setTimeout(() => {
+    loading.hidden = true;
+    errorTitle.textContent = "3D preview is taking longer";
+    errorCopy.textContent = "The object poster and AR placement are ready. Retry the interactive preview when your connection or device frees up.";
+    error.hidden = false;
+    shell.classList.remove("is-changing");
+  }, 12000);
 }
 
 async function loadAtlasPoints() {
@@ -245,6 +259,8 @@ function selectScan(index: number) {
   metLink.textContent = `View object ${scan.id} at The Met ↗`;
   launch.href = quickLookUrl(scan);
   launchImage.src = path(scan, "jpg");
+  poster.src = path(scan, "jpg");
+  poster.alt = `Preview of the ${scan.title} 3D scan`;
 
   options.forEach((option, optionIndex) => {
     const active = optionIndex === current;
@@ -352,14 +368,19 @@ viewer.addEventListener("progress", (event: Event) => {
 });
 
 viewer.addEventListener("load", () => {
+  window.clearTimeout(modelLoadTimer);
   loading.hidden = true;
   error.hidden = true;
   viewer.classList.add("is-loaded");
   shell.classList.remove("is-changing");
+  shell.classList.add("has-live-model");
 });
 
 viewer.addEventListener("error", () => {
+  window.clearTimeout(modelLoadTimer);
   loading.hidden = true;
+  errorTitle.textContent = "Interactive 3D preview unavailable";
+  errorCopy.textContent = "The object poster and AR placement are still ready. Close unused tabs, then retry the preview.";
   error.hidden = false;
   shell.classList.remove("is-changing");
 });

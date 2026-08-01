@@ -32,10 +32,16 @@
 
     <main class="ar-app">
       <section class="viewer-shell" aria-label="Interactive 3D scan viewer">
+        <img
+          id="viewer-poster"
+          class="viewer-poster"
+          src="./ar/met-3d/lion-sarcophagus.jpg"
+          alt="Preview of the Marble Sarcophagus with Lions Felling Antelope 3D scan"
+        />
         <model-viewer
           id="viewer"
           src="./ar/met-3d/lion-sarcophagus.glb"
-          ios-src="./ar/met-3d/lion-sarcophagus.usdz"
+          ios-src="./ar/met-3d/lion-sarcophagus-gallery.usdz"
           poster="./ar/met-3d/lion-sarcophagus.jpg"
           alt="Interactive 3D model of a Roman marble sarcophagus"
           ar
@@ -43,17 +49,20 @@
           ar-placement="floor"
           camera-controls
           auto-rotate
-          rotation-per-second="4deg"
+          rotation-per-second="8deg"
           touch-action="pan-y"
-          shadow-intensity="1"
+          shadow-intensity="1.3"
           shadow-softness=".8"
           exposure="1"
           environment-image="neutral"
+          tone-mapping="neutral"
           camera-orbit="28deg 72deg 110%"
           min-camera-orbit="auto 45deg auto"
           max-camera-orbit="auto 105deg auto"
           interpolation-decay="120"
           interaction-prompt="none"
+          loading="eager"
+          reveal="auto"
         >
           <button class="native-ar-button" slot="ar-button">Place in AR</button>
           <div class="progress" slot="progress-bar"><i></i></div>
@@ -61,7 +70,7 @@
 
         <div class="object-state glass" aria-live="polite">
           <span class="verified"><i></i> Verified Met 3D scan</span>
-          <h2 id="work-title">Lion Sarcophagus</h2>
+          <h2 id="work-title">Marble Sarcophagus with Lions Felling Antelope</h2>
           <p id="work-meta">Roman · 3rd century · Marble</p>
         </div>
 
@@ -91,8 +100,8 @@
         </div>
 
         <div id="viewer-error" class="viewer-error glass" hidden role="alert">
-          <strong>3D scan could not load</strong>
-          <span>Keep this page open and try again.</span>
+          <strong id="viewer-error-title">3D scan could not load</strong>
+          <span id="viewer-error-copy">The object preview remains available. You can retry or continue directly to AR.</span>
           <button id="retry-model" type="button">Retry</button>
         </div>
 
@@ -125,7 +134,7 @@
 
         <div class="launch-dock glass">
           <button id="previous-work" class="round-button" type="button" aria-label="Previous 3D scan">←</button>
-          <a id="ar-launch" class="ar-launch" rel="ar" href="./ar/met-3d/lion-sarcophagus.usdz#allowsContentScaling=1&amp;callToAction=View%20at%20The%20Met&amp;checkoutTitle=Lion%20Sarcophagus&amp;checkoutSubtitle=Roman%20%C2%B7%203rd%20century&amp;canonicalWebPageURL=https%3A%2F%2Fwww.metmuseum.org%2Fart%2Fcollection%2Fsearch%2F854888">
+          <a id="ar-launch" class="ar-launch" rel="ar" href="./ar/met-3d/lion-sarcophagus-gallery.usdz#allowsContentScaling=1&amp;callToAction=View%20at%20The%20Met&amp;checkoutTitle=Marble%20Sarcophagus%20with%20Lions%20Felling%20Antelope&amp;checkoutSubtitle=Roman%20%C2%B7%203rd%20century&amp;canonicalWebPageURL=https%3A%2F%2Fwww.metmuseum.org%2Fart%2Fcollection%2Fsearch%2F854888">
             <img id="ar-launch-image" src="./ar/met-3d/lion-sarcophagus.jpg" alt="" />
             <span class="ar-icon" aria-hidden="true">⌗</span>
             <span><b>Place in AR</b><small>Title + Met link included</small></span>
@@ -146,19 +155,19 @@
         <nav class="scan-rail" aria-label="Choose a verified Met 3D scan">
           <button class="scan-option is-active" data-work="0" aria-current="true">
             <img src="./ar/met-3d/lion-sarcophagus.jpg" alt="Marble sarcophagus with lions" />
-            <span><b>Lion Sarcophagus</b><small>Roman · Marble</small></span>
+            <span><b>Marble Sarcophagus with Lions Felling Antelope</b><small>Roman · Marble</small></span>
           </button>
           <button class="scan-option" data-work="1">
             <img src="./ar/met-3d/nayarit-house.jpg" alt="Nayarit ceramic house model" />
-            <span><b>Nayarit House</b><small>200 BCE–300 CE · Ceramic</small></span>
+            <span><b>House Model</b><small>Nayarit · Ceramic</small></span>
           </button>
           <button class="scan-option" data-work="2">
             <img src="./ar/met-3d/aphrodite-eros.jpg" alt="Limestone statue of Aphrodite and Eros" />
-            <span><b>Aphrodite + Eros</b><small>Cypriot · Limestone</small></span>
+            <span><b>Limestone Statue of Aphrodite Holding Winged Eros</b><small>Cypriot · Limestone</small></span>
           </button>
           <button class="scan-option" data-work="3">
             <img src="./ar/met-3d/ngya-post.jpg" alt="Ngya commemorative post" />
-            <span><b>Ngya</b><small>Bongo · Mahogany</small></span>
+            <span><b>Ngya (Commemorative Post)</b><small>Bongo · Mahogany</small></span>
           </button>
         </nav>
 
