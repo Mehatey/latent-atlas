@@ -91,37 +91,42 @@ def wrapped_lines(draw: ImageDraw.ImageDraw, copy: str, typeface, max_width: int
 
 
 def make_label(work: dict[str, str], destination: Path):
-    image = Image.new("RGB", (1400, 820), (13, 15, 19))
+    image = Image.new("RGB", (1200, 1500), (10, 11, 14))
     draw = ImageDraw.Draw(image)
     accent = (217, 255, 114)
     ink = (246, 246, 241)
-    muted = (185, 188, 196)
-    quiet = (126, 130, 141)
-    draw.rounded_rectangle((18, 18, 1382, 802), radius=28, outline=(68, 72, 82), width=3)
-    draw.ellipse((72, 66, 92, 86), fill=accent)
-    draw.text((112, 62), "LATENT ATLAS  /  VERIFIED MET 3D SCAN", font=font(MONO, 28), fill=accent)
+    muted = (193, 196, 203)
+    quiet = (124, 128, 138)
 
-    title_font = font(SERIF, 78)
-    title_lines = wrapped_lines(draw, work["title"], title_font, 1240, 2)
-    y = 136
+    draw.rectangle((72, 76, 92, 96), fill=accent)
+    draw.text((122, 70), "LATENT ATLAS", font=font(MONO, 31), fill=accent)
+    draw.text((122, 112), "OBJECT IN SPACE", font=font(MONO, 25), fill=quiet)
+
+    title_font = font(SERIF, 94)
+    title_lines = wrapped_lines(draw, work["title"], title_font, 1036, 4)
+    y = 214
     for line in title_lines:
         draw.text((72, y), line, font=title_font, fill=ink)
-        y += 88
+        y += 106
 
-    draw.text((72, y + 10), f'{work["maker"]}  ·  {work["date"]}  ·  {work["medium"]}', font=font(SANS, 35), fill=muted)
-    rule_y = y + 82
-    draw.line((72, rule_y, 1328, rule_y), fill=(58, 62, 70), width=2)
+    meta_y = y + 26
+    draw.text((72, meta_y), work["maker"], font=font(SANS, 42), fill=ink)
+    draw.text((72, meta_y + 62), f'{work["date"]}  ·  {work["medium"]}', font=font(SANS, 34), fill=muted)
+    rule_y = meta_y + 132
+    draw.line((72, rule_y, 1128, rule_y), fill=(63, 67, 76), width=2)
 
-    body_font = font(SERIF, 39)
-    body_lines = wrapped_lines(draw, work["description"], body_font, 1240, 3)
-    body_y = rule_y + 48
+    body_font = font(SERIF, 45)
+    body_lines = wrapped_lines(draw, work["description"], body_font, 1036, 4)
+    body_y = rule_y + 52
     for line in body_lines:
         draw.text((72, body_y), line, font=body_font, fill=muted)
-        body_y += 50
+        body_y += 58
 
-    draw.rounded_rectangle((72, 690, 954, 758), radius=18, fill=(28, 31, 38), outline=(74, 78, 88), width=2)
-    draw.text((102, 708), "PINCH TO SCALE   ·   DRAG TO ROTATE   ·   WALK AROUND", font=font(MONO, 25), fill=ink)
-    draw.text((1004, 710), f'OBJECT {work["object_id"]}', font=font(MONO, 24), fill=quiet)
+    draw.line((72, 1344, 1128, 1344), fill=(49, 52, 60), width=2)
+    draw.text((72, 1390), "THE METROPOLITAN MUSEUM OF ART  /  OPEN ACCESS", font=font(MONO, 23), fill=quiet)
+    object_copy = f'OBJECT {work["object_id"]}'
+    object_width = draw.textbbox((0, 0), object_copy, font=font(MONO, 23))[2]
+    draw.text((1128 - object_width, 1430), object_copy, font=font(MONO, 23), fill=quiet)
     destination.parent.mkdir(parents=True, exist_ok=True)
     # USD Preview Surface and Quick Look resolve this front-facing texture with
     # the opposite UV origin from Pillow. Bake the correction into the asset so
@@ -175,6 +180,7 @@ def make_panel(stage: Usd.Stage, path: str, width: float, height: float, center:
     mesh.CreateFaceVertexCountsAttr([4])
     mesh.CreateFaceVertexIndicesAttr([0, 1, 2, 3])
     mesh.CreateDoubleSidedAttr(False)
+    mesh.CreateSubdivisionSchemeAttr(UsdGeom.Tokens.none)
     mesh.CreateNormalsAttr([Gf.Vec3f(0, 0, 1)])
     mesh.SetNormalsInterpolation(UsdGeom.Tokens.constant)
     st = UsdGeom.PrimvarsAPI(mesh).CreatePrimvar("st", Sdf.ValueTypeNames.TexCoord2fArray, UsdGeom.Tokens.vertex)
@@ -207,10 +213,11 @@ def build(source: Path):
         center_z = (minimum[2] + maximum[2]) / 2
         radius = ((span_x / 2) ** 2 + (span_z / 2) ** 2) ** 0.5 * 1.08
         base_height = max(0.025, min(0.08, span_y * 0.045))
-        label_width = max(0.38, min(0.74, max(span_x * 0.34, span_y * 0.34)))
-        label_height = label_width * (820 / 1400)
+        label_width = max(0.36, min(0.72, max(span_x * 0.28, span_y * 0.32)))
+        label_height = label_width * (1500 / 1200)
         label_x = maximum[0] + label_width * 0.62
-        label_y = minimum[1] + max(label_height * 0.7, span_y * 0.42)
+        label_bottom = minimum[1] + max(base_height + 0.03, span_y * 0.12)
+        label_y = label_bottom + label_height / 2
         label_z = maximum[2] + max(0.018, radius * 0.025)
         label_path = work / "object-label.png"
         make_label(work_info, label_path)
@@ -220,7 +227,7 @@ def build(source: Path):
         stage.SetMetadata("metersPerUnit", 1.0)
         stage.SetMetadata("upAxis", "Y")
         stage.SetStartTimeCode(0)
-        stage.SetEndTimeCode(864)
+        stage.SetEndTimeCode(240)
         stage.SetTimeCodesPerSecond(24)
 
         experience = UsdGeom.Xform.Define(stage, "/ARExperience")
@@ -228,7 +235,7 @@ def build(source: Path):
         turntable = UsdGeom.Xform.Define(stage, "/ARExperience/Turntable")
         rotation = turntable.AddRotateYOp()
         rotation.Set(0, Usd.TimeCode(0))
-        rotation.Set(360, Usd.TimeCode(864))
+        rotation.Set(360, Usd.TimeCode(240))
         scan = UsdGeom.Xform.Define(stage, "/ARExperience/Turntable/Scan")
         scan.GetPrim().GetReferences().AddReference(
             f"./{model_layer.name}",
@@ -240,7 +247,7 @@ def build(source: Path):
         base.CreateRadiusAttr(radius)
         base.CreateHeightAttr(base_height)
         base.AddTranslateOp().Set(Gf.Vec3d(center_x, minimum[1] - base_height / 2, center_z))
-        dark = bind_material(stage, "/ARExperience/PlinthLook", (0.055, 0.06, 0.07), 0.08, 0.3)
+        dark = bind_material(stage, "/ARExperience/PlinthLook", (0.018, 0.021, 0.027), 0.0, 0.82)
         UsdShade.MaterialBindingAPI.Apply(base.GetPrim()).Bind(dark)
 
         trim = UsdGeom.Cylinder.Define(stage, "/ARExperience/Trim")
@@ -264,7 +271,7 @@ def build(source: Path):
         particles = UsdGeom.Xform.Define(stage, "/ARExperience/AtlasOrbit")
         orbit_rotation = particles.AddRotateYOp()
         orbit_rotation.Set(0, Usd.TimeCode(0))
-        orbit_rotation.Set(-360, Usd.TimeCode(864))
+        orbit_rotation.Set(-360, Usd.TimeCode(240))
         particle_look = bind_material(stage, "/ARExperience/ParticleLook", (0.52, 0.66, 0.22), 0.1, 0.35, (0.08, 0.12, 0.015))
         particle_ring = max(radius * 0.78, span_x * 0.48)
         for index, (dx, dz, lift) in enumerate([
