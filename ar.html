@@ -49,7 +49,7 @@
           ar-placement="floor"
           camera-controls
           auto-rotate
-          rotation-per-second="8deg"
+          rotation-per-second="36deg"
           touch-action="pan-y"
           shadow-intensity="1.3"
           shadow-softness=".8"
@@ -134,11 +134,11 @@
 
         <div class="launch-dock glass">
           <button id="previous-work" class="round-button" type="button" aria-label="Previous 3D scan">←</button>
-          <a id="ar-launch" class="ar-launch" rel="ar" href="./ar/met-3d/lion-sarcophagus-gallery.usdz?v=20260803b#allowsContentScaling=1&amp;callToAction=View%20at%20The%20Met&amp;checkoutTitle=Marble%20Sarcophagus%20with%20Lions%20Felling%20Antelope&amp;checkoutSubtitle=Roman%20%C2%B7%203rd%20century&amp;canonicalWebPageURL=https%3A%2F%2Fwww.metmuseum.org%2Fart%2Fcollection%2Fsearch%2F854888">
+          <button id="ar-launch" class="ar-launch" type="button">
             <img id="ar-launch-image" src="./ar/met-3d/lion-sarcophagus.jpg" alt="" />
-            <span class="ar-icon" aria-hidden="true">⌗</span>
-            <span><b>Place in AR</b><small>Title + Met link included</small></span>
-          </a>
+            <span class="ar-icon" aria-hidden="true">◎</span>
+            <span><b>Open camera stage</b><small>Place, orbit, switch and record</small></span>
+          </button>
           <button id="next-work" class="round-button" type="button" aria-label="Next 3D scan">→</button>
         </div>
       </section>
@@ -180,15 +180,102 @@
           <div class="ar-steps">
             <span>On iPhone</span>
             <ol>
-              <li><b>1</b> Tap <strong>Place in AR</strong></li>
-              <li><b>2</b> Move phone to find a floor</li>
-              <li><b>3</b> Pinch, rotate, or walk around</li>
+              <li><b>1</b> Tap <strong>Open camera stage</strong></li>
+              <li><b>2</b> Drag the object into position</li>
+              <li><b>3</b> Orbit, pinch, switch, and record</li>
             </ol>
-            <p>Apple Quick Look opens full-screen. Its native card identifies the work and links to The Met. Return to Safari for arrows and related works.</p>
+            <p>The camera stage is an interactive editorial view. Native Apple floor placement remains available inside the stage.</p>
           </div>
         </article>
       </section>
     </main>
+
+    <section id="camera-stage" class="camera-stage" hidden aria-label="Latent Atlas camera stage">
+      <video id="camera-feed" class="camera-feed" autoplay muted playsinline aria-hidden="true"></video>
+      <div class="camera-fallback" aria-hidden="true"></div>
+      <div class="camera-shade" aria-hidden="true"></div>
+
+      <header class="stage-header stage-glass">
+        <button id="close-camera-stage" class="stage-icon-button" type="button" aria-label="Close camera stage">×</button>
+        <div class="stage-brand"><i>Latent</i> Atlas <span>Spatial study</span></div>
+        <div id="camera-status" class="camera-status" role="status"><i></i><span>Camera</span></div>
+      </header>
+
+      <div id="stage-object" class="stage-object is-entering">
+        <div class="stage-ground" aria-hidden="true"><i></i></div>
+        <model-viewer
+          id="stage-viewer"
+          src="./ar/met-3d/lion-sarcophagus.glb"
+          poster="./ar/met-3d/lion-sarcophagus.jpg"
+          alt="Interactive spatial model of a Roman marble sarcophagus"
+          camera-controls
+          auto-rotate
+          rotation-per-second="36deg"
+          touch-action="none"
+          shadow-intensity="1.6"
+          shadow-softness=".85"
+          exposure="1.08"
+          environment-image="neutral"
+          tone-mapping="neutral"
+          camera-orbit="28deg 72deg 110%"
+          interpolation-decay="150"
+          interaction-prompt="none"
+          loading="eager"
+          reveal="auto"
+        ></model-viewer>
+        <div id="stage-move-surface" class="stage-move-surface" aria-label="Drag to move the object" hidden></div>
+      </div>
+
+      <aside id="stage-info" class="stage-info stage-glass" aria-live="polite">
+        <div class="stage-info-heading">
+          <span><i></i> Verified Met 3D scan</span>
+          <b id="stage-counter">1 / 4</b>
+        </div>
+        <h2 id="stage-title">Marble Sarcophagus with Lions Felling Antelope</h2>
+        <p id="stage-meta">Roman · 3rd century · Marble</p>
+        <p id="stage-description">Lions grasp antelope at either end of a Roman sarcophagus, now readable as a complete object in space.</p>
+        <a id="stage-met-link" href="https://www.metmuseum.org/art/collection/search/854888" target="_blank" rel="noopener">Object 854888 at The Met ↗</a>
+      </aside>
+
+      <nav class="stage-tools stage-glass" aria-label="Camera stage controls">
+        <button id="stage-move" type="button" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M2 12h20M12 2l-3 3m3-3 3 3M22 12l-3-3m3 3-3 3M12 22l3-3m-3 3-3-3M2 12l3 3m-3-3 3-3"/></svg>
+          <span>Move</span>
+        </button>
+        <button id="stage-orbit" class="is-active" type="button" aria-pressed="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.34-5.66M4 4v6h6"/></svg>
+          <span>Orbit</span>
+        </button>
+        <button id="stage-info-toggle" class="is-active" type="button" aria-pressed="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
+          <span>Info</span>
+        </button>
+        <button id="stage-sound" class="is-active" type="button" aria-pressed="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4h3l4 4V6L8 10H5zM16 9c1 .8 1.5 1.8 1.5 3S17 14.2 16 15M18.5 6.5C20.2 8 21 9.8 21 12s-.8 4-2.5 5.5"/></svg>
+          <span>Sound</span>
+        </button>
+      </nav>
+
+      <div id="stage-guide" class="stage-guide stage-glass" role="status">
+        <strong>Compose the object in your room</strong>
+        <span>Drag to orbit · pinch to scale · use Move to reposition</span>
+      </div>
+
+      <div class="stage-dock stage-glass">
+        <button id="stage-previous" class="stage-arrow" type="button" aria-label="Previous object">←</button>
+        <div class="stage-dock-center">
+          <button id="stage-place" type="button"><span>Place object</span><small>tap to settle</small></button>
+          <a id="stage-quick-look" rel="ar" href="./ar/met-3d/lion-sarcophagus-gallery.usdz?v=20260803b">Native floor AR ↗</a>
+        </div>
+        <button id="stage-next" class="stage-arrow" type="button" aria-label="Next object">→</button>
+      </div>
+
+      <div id="camera-permission" class="camera-permission stage-glass" hidden role="alert">
+        <strong>Camera access needed</strong>
+        <span>Allow camera access in Safari to compose the object in your room.</span>
+        <button id="retry-camera" type="button">Try camera again</button>
+      </div>
+    </section>
 
     <footer>
       <span>The Metropolitan Museum of Art · Open Access / CC0</span>

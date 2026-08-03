@@ -80,7 +80,7 @@ const title = document.querySelector("#work-title") as HTMLElement;
 const meta = document.querySelector("#work-meta") as HTMLElement;
 const description = document.querySelector("#work-description") as HTMLElement;
 const metLink = document.querySelector("#met-link") as HTMLAnchorElement;
-const launch = document.querySelector("#ar-launch") as HTMLAnchorElement;
+const launch = document.querySelector("#ar-launch") as HTMLButtonElement;
 const launchImage = document.querySelector("#ar-launch-image") as HTMLImageElement;
 const returnToast = document.querySelector("#ar-return-toast") as HTMLElement;
 const returnRelated = document.querySelector("#return-related") as HTMLButtonElement;
@@ -107,6 +107,32 @@ const position = document.querySelector("#scan-position") as HTMLElement;
 const options = [...document.querySelectorAll<HTMLButtonElement>(".scan-option")];
 const intro = document.querySelector("#brand-intro") as HTMLElement;
 const skipIntro = document.querySelector("#skip-intro") as HTMLButtonElement;
+const cameraStage = document.querySelector("#camera-stage") as HTMLElement;
+const cameraFeed = document.querySelector("#camera-feed") as HTMLVideoElement;
+const cameraStatus = document.querySelector("#camera-status span") as HTMLElement;
+const cameraPermission = document.querySelector("#camera-permission") as HTMLElement;
+const retryCamera = document.querySelector("#retry-camera") as HTMLButtonElement;
+const closeCameraStage = document.querySelector("#close-camera-stage") as HTMLButtonElement;
+const stageObject = document.querySelector("#stage-object") as HTMLElement;
+const stageMoveSurface = document.querySelector("#stage-move-surface") as HTMLElement;
+const stageViewer = document.querySelector("#stage-viewer") as HTMLElement & {
+  jumpCameraToGoal?: () => void;
+};
+const stageTitle = document.querySelector("#stage-title") as HTMLElement;
+const stageMeta = document.querySelector("#stage-meta") as HTMLElement;
+const stageDescription = document.querySelector("#stage-description") as HTMLElement;
+const stageCounter = document.querySelector("#stage-counter") as HTMLElement;
+const stageMetLink = document.querySelector("#stage-met-link") as HTMLAnchorElement;
+const stageInfo = document.querySelector("#stage-info") as HTMLElement;
+const stageMove = document.querySelector("#stage-move") as HTMLButtonElement;
+const stageOrbit = document.querySelector("#stage-orbit") as HTMLButtonElement;
+const stageInfoToggle = document.querySelector("#stage-info-toggle") as HTMLButtonElement;
+const stageSound = document.querySelector("#stage-sound") as HTMLButtonElement;
+const stageGuide = document.querySelector("#stage-guide") as HTMLElement;
+const stagePlace = document.querySelector("#stage-place") as HTMLButtonElement;
+const stagePrevious = document.querySelector("#stage-previous") as HTMLButtonElement;
+const stageNext = document.querySelector("#stage-next") as HTMLButtonElement;
+const stageQuickLook = document.querySelector("#stage-quick-look") as HTMLAnchorElement;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 let current = 0;
@@ -118,6 +144,16 @@ let arSessionStarted = false;
 let arBecameHidden = false;
 let returnToastTimer = 0;
 let modelLoadTimer = 0;
+let cameraStream: MediaStream | null = null;
+let stageMoveActive = false;
+let stageSoundActive = true;
+let stagePlaced = false;
+let stageX = 0;
+let stageY = 0;
+let stageScale = 1;
+let audioContext: AudioContext | null = null;
+const activePointers = new Map<number, { x: number; y: number }>();
+let gestureOrigin = { x: 0, y: 0, stageX: 0, stageY: 0, distance: 0, scale: 1 };
 
 function path(scan: Scan, extension: "glb" | "usdz" | "jpg") {
   const suffix = extension === "usdz" ? "-gallery.usdz" : `.${extension}`;
@@ -149,6 +185,110 @@ function closeIntro() {
     intro.hidden = true;
     document.body.classList.remove("is-intro");
   }, reducedMotion.matches ? 0 : 480);
+}
+
+function playCue(kind: "open" | "select" | "place" | "mode" = "select") {
+  if (!stageSoundActive) return;
+  try {
+    audioContext ??= new AudioContext();
+    if (audioContext.state === "suspended") void audioContext.resume();
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const frequencies = { open: [174, 261], select: [246, 329], place: [196, 392], mode: [220, 277] }[kind];
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequencies[0], now);
+    oscillator.frequency.exponentialRampToValueAtTime(frequencies[1], now + .16);
+    gain.gain.setValueAtTime(.0001, now);
+    gain.gain.exponentialRampToValueAtTime(.055, now + .018);
+    gain.gain.exponentialRampToValueAtTime(.0001, now + .24);
+    oscillator.connect(gain).connect(audioContext.destination);
+    oscillator.start(now);
+    oscillator.stop(now + .26);
+  } catch {
+    // Audio is enhancement only; camera-stage interaction remains complete without it.
+  }
+}
+
+function setStageTransform() {
+  stageObject.style.setProperty("--stage-x", `${stageX}px`);
+  stageObject.style.setProperty("--stage-y", `${stageY}px`);
+  stageObject.style.setProperty("--stage-scale", String(stageScale));
+}
+
+function resetStagePosition() {
+  stageX = 0;
+  stageY = 0;
+  stageScale = 1;
+  setStageTransform();
+  stageObject.classList.remove("is-placed");
+  stagePlaced = false;
+  const label = stagePlace.querySelector("span");
+  const helper = stagePlace.querySelector("small");
+  if (label) label.textContent = "Place object";
+  if (helper) helper.textContent = "tap to settle";
+}
+
+function setStageMoveMode(active: boolean) {
+  stageMoveActive = active;
+  stageMoveSurface.hidden = !active;
+  stageMove.classList.toggle("is-active", active);
+  stageMove.setAttribute("aria-pressed", String(active));
+  stageOrbit.classList.toggle("is-active", !active);
+  stageOrbit.setAttribute("aria-pressed", String(!active));
+  stageViewer.toggleAttribute("auto-rotate", !active);
+  stageGuide.querySelector("strong")!.textContent = active ? "Move the object with one finger" : "Orbit the object with one finger";
+  stageGuide.querySelector("span")!.textContent = active ? "Drag anywhere on the object · pinch to resize" : "Drag to inspect · pinch to scale · tap Move to reposition";
+  playCue("mode");
+}
+
+async function startCamera() {
+  cameraPermission.hidden = true;
+  cameraStage.classList.add("is-requesting-camera");
+  cameraStatus.textContent = "Starting";
+  try {
+    cameraStream?.getTracks().forEach((track) => track.stop());
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+      },
+      audio: false,
+    });
+    cameraFeed.srcObject = cameraStream;
+    await cameraFeed.play();
+    cameraStage.classList.add("has-camera");
+    cameraStatus.textContent = "Live camera";
+  } catch {
+    cameraStage.classList.remove("has-camera");
+    cameraStatus.textContent = "Camera blocked";
+    cameraPermission.hidden = false;
+  } finally {
+    cameraStage.classList.remove("is-requesting-camera");
+  }
+}
+
+function openStage() {
+  closeIntro();
+  cameraStage.hidden = false;
+  document.body.classList.add("stage-open");
+  resetStagePosition();
+  setStageMoveMode(false);
+  stageObject.classList.remove("is-entering");
+  requestAnimationFrame(() => stageObject.classList.add("is-entering"));
+  window.setTimeout(() => stageObject.classList.remove("is-entering"), reducedMotion.matches ? 0 : 720);
+  void startCamera();
+  playCue("open");
+}
+
+function closeStage() {
+  cameraStream?.getTracks().forEach((track) => track.stop());
+  cameraStream = null;
+  cameraFeed.srcObject = null;
+  cameraStage.classList.remove("has-camera", "is-requesting-camera");
+  cameraStage.hidden = true;
+  document.body.classList.remove("stage-open");
 }
 
 function showLoading() {
@@ -259,10 +399,16 @@ function selectScan(index: number) {
   position.textContent = `${current + 1} / ${scans.length}`;
   metLink.href = metUrl(scan);
   metLink.textContent = `View object ${scan.id} at The Met ↗`;
-  launch.href = quickLookUrl(scan);
   launchImage.src = path(scan, "jpg");
   poster.src = path(scan, "jpg");
   poster.alt = `Preview of the ${scan.title} 3D scan`;
+  stageTitle.textContent = scan.title;
+  stageMeta.textContent = `${scan.artist} · ${scan.date} · ${scan.medium}`;
+  stageDescription.textContent = scan.description;
+  stageCounter.textContent = `${current + 1} / ${scans.length}`;
+  stageMetLink.href = metUrl(scan);
+  stageMetLink.textContent = `Object ${scan.id} at The Met ↗`;
+  stageQuickLook.href = quickLookUrl(scan);
 
   options.forEach((option, optionIndex) => {
     const active = optionIndex === current;
@@ -285,8 +431,19 @@ function selectScan(index: number) {
     viewer.setAttribute("poster", path(scan, "jpg"));
     viewer.setAttribute("alt", `Interactive 3D model of ${scan.title}`);
     viewer.setAttribute("camera-orbit", scan.orbit);
+    stageViewer.setAttribute("src", path(scan, "glb"));
+    stageViewer.setAttribute("poster", path(scan, "jpg"));
+    stageViewer.setAttribute("alt", `Interactive spatial model of ${scan.title}`);
+    stageViewer.setAttribute("camera-orbit", scan.orbit);
+    stageViewer.jumpCameraToGoal?.();
     if (!relatedPanel.hidden) void renderRelated();
   }, reducedMotion.matches ? 0 : 120);
+
+  if (!cameraStage.hidden) {
+    stageObject.classList.add("is-switching");
+    window.setTimeout(() => stageObject.classList.remove("is-switching"), reducedMotion.matches ? 0 : 420);
+    playCue("select");
+  }
 }
 
 function retryCurrent() {
@@ -322,17 +479,91 @@ info.addEventListener("click", () => {
   if (open) context.scrollIntoView({ behavior: reducedMotion.matches ? "auto" : "smooth", block: "nearest" });
 });
 
-relatedToggle.addEventListener("click", () => setRelatedOpen(relatedPanel.hidden));
+relatedToggle.addEventListener("click", () => setRelatedOpen(relatedPanel.hasAttribute("hidden")));
 closeRelated.addEventListener("click", () => setRelatedOpen(false));
 
-launch.addEventListener("click", async (event) => {
-  if (isiOS()) {
-    arSessionStarted = true;
-    arBecameHidden = false;
-    return;
+launch.addEventListener("click", openStage);
+closeCameraStage.addEventListener("click", closeStage);
+retryCamera.addEventListener("click", () => void startCamera());
+stagePrevious.addEventListener("click", () => selectScan(current - 1));
+stageNext.addEventListener("click", () => selectScan(current + 1));
+stageMove.addEventListener("click", () => setStageMoveMode(true));
+stageOrbit.addEventListener("click", () => setStageMoveMode(false));
+
+stageInfoToggle.addEventListener("click", () => {
+  const visible = !stageInfo.classList.contains("is-hidden");
+  stageInfo.classList.toggle("is-hidden", visible);
+  stageInfoToggle.classList.toggle("is-active", !visible);
+  stageInfoToggle.setAttribute("aria-pressed", String(!visible));
+  playCue("mode");
+});
+
+stageSound.addEventListener("click", () => {
+  stageSoundActive = !stageSoundActive;
+  stageSound.classList.toggle("is-active", stageSoundActive);
+  stageSound.setAttribute("aria-pressed", String(stageSoundActive));
+  if (stageSoundActive) playCue("mode");
+});
+
+stagePlace.addEventListener("click", () => {
+  stagePlaced = !stagePlaced;
+  stageObject.classList.toggle("is-placed", stagePlaced);
+  const label = stagePlace.querySelector("span");
+  const helper = stagePlace.querySelector("small");
+  if (label) label.textContent = stagePlaced ? "Object placed" : "Place object";
+  if (helper) helper.textContent = stagePlaced ? "tap to reposition" : "tap to settle";
+  if (!stagePlaced) setStageMoveMode(true);
+  else setStageMoveMode(false);
+  playCue("place");
+});
+
+stageQuickLook.addEventListener("click", () => {
+  arSessionStarted = true;
+  arBecameHidden = false;
+});
+
+function pointerDistance() {
+  const points = [...activePointers.values()];
+  if (points.length < 2) return 0;
+  return Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y);
+}
+
+stageMoveSurface.addEventListener("pointerdown", (event) => {
+  stageMoveSurface.setPointerCapture(event.pointerId);
+  activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  if (activePointers.size === 1) {
+    gestureOrigin = { x: event.clientX, y: event.clientY, stageX, stageY, distance: 0, scale: stageScale };
+  } else if (activePointers.size === 2) {
+    gestureOrigin.distance = pointerDistance();
+    gestureOrigin.scale = stageScale;
   }
-  event.preventDefault();
-  await viewer.activateAR?.();
+});
+
+stageMoveSurface.addEventListener("pointermove", (event) => {
+  if (!activePointers.has(event.pointerId)) return;
+  activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  if (activePointers.size === 1) {
+    stageX = Math.max(-innerWidth * .38, Math.min(innerWidth * .38, gestureOrigin.stageX + event.clientX - gestureOrigin.x));
+    stageY = Math.max(-innerHeight * .24, Math.min(innerHeight * .24, gestureOrigin.stageY + event.clientY - gestureOrigin.y));
+  } else if (activePointers.size >= 2 && gestureOrigin.distance > 0) {
+    stageScale = Math.max(.55, Math.min(1.8, gestureOrigin.scale * pointerDistance() / gestureOrigin.distance));
+  }
+  setStageTransform();
+});
+
+function releasePointer(event: PointerEvent) {
+  activePointers.delete(event.pointerId);
+  if (activePointers.size === 1) {
+    const remaining = [...activePointers.values()][0];
+    gestureOrigin = { x: remaining.x, y: remaining.y, stageX, stageY, distance: 0, scale: stageScale };
+  }
+}
+
+stageMoveSurface.addEventListener("pointerup", releasePointer);
+stageMoveSurface.addEventListener("pointercancel", releasePointer);
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !cameraStage.hidden) closeStage();
 });
 
 launch.addEventListener("message", (event: Event) => {
