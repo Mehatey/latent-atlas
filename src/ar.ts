@@ -67,6 +67,7 @@ const scans: Scan[] = [
 // Each scan is paired with a comparable object already embedded in the atlas.
 // Related cards are the nearest spatial neighbors around that anchor.
 const relatedAnchorIndices = [1118, 54, 843, 534];
+const arAssetVersion = "20260803";
 
 const viewer = document.querySelector("#viewer") as HTMLElement & {
   cameraOrbit?: string;
@@ -120,7 +121,8 @@ let modelLoadTimer = 0;
 
 function path(scan: Scan, extension: "glb" | "usdz" | "jpg") {
   const suffix = extension === "usdz" ? "-gallery.usdz" : `.${extension}`;
-  return `./ar/met-3d/${scan.slug}${suffix}`;
+  const version = extension === "usdz" ? `?v=${arAssetVersion}` : "";
+  return `./ar/met-3d/${scan.slug}${suffix}${version}`;
 }
 
 function metUrl(scan: Scan) {
