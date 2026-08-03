@@ -9,6 +9,7 @@ type Scan = {
   medium: string;
   description: string;
   orbit: string;
+  kind: "scan" | "dimensional";
 };
 
 type AtlasPoint = {
@@ -31,6 +32,7 @@ const scans: Scan[] = [
     medium: "Marble",
     description: "Lions grasp antelope at either end of a Roman sarcophagus, now readable as a complete object in space.",
     orbit: "28deg 72deg 110%",
+    kind: "scan",
   },
   {
     id: 312581,
@@ -41,6 +43,7 @@ const scans: Scan[] = [
     medium: "Ceramic, slip",
     description: "A compact architectural world opens across two levels, preserving figures, food, shelter, and gathering.",
     orbit: "32deg 68deg 140%",
+    kind: "scan",
   },
   {
     id: 242017,
@@ -51,6 +54,7 @@ const scans: Scan[] = [
     medium: "Limestone",
     description: "A frontal goddess, elaborate headdress, and small winged Eros become legible from every side.",
     orbit: "26deg 74deg 145%",
+    kind: "scan",
   },
   {
     id: 309909,
@@ -61,6 +65,73 @@ const scans: Scan[] = [
     medium: "Mahogany",
     description: "A tall commemorative form turns a single carved tree trunk into presence, memory, and social standing.",
     orbit: "24deg 72deg 500%",
+    kind: "scan",
+  },
+  {
+    id: 10481,
+    slug: "heart-of-the-andes",
+    title: "Heart of the Andes",
+    artist: "Frederic Edwin Church",
+    date: "1859",
+    medium: "Oil on canvas · dimensional interpretation",
+    description: "A panoramic landscape becomes a broad spatial surface, revealing scale, depth, and the painting's imagined journey.",
+    orbit: "0deg 76deg 118%",
+    kind: "dimensional",
+  },
+  {
+    id: 435702,
+    slug: "horse-fair",
+    title: "The Horse Fair",
+    artist: "Rosa Bonheur",
+    date: "1852–55",
+    medium: "Oil on canvas · dimensional interpretation",
+    description: "A wide field of turning horses and handlers becomes a physical plane of force and movement.",
+    orbit: "0deg 76deg 120%",
+    kind: "dimensional",
+  },
+  {
+    id: 435882,
+    slug: "cezanne-primroses",
+    title: "Still Life with Apples and a Pot of Primroses",
+    artist: "Paul Cézanne",
+    date: "ca. 1890",
+    medium: "Oil on canvas · dimensional interpretation",
+    description: "Apples, cloth, and flowers occupy a shallow dimensional field shaped by unstable perspective and balanced weight.",
+    orbit: "0deg 76deg 122%",
+    kind: "dimensional",
+  },
+  {
+    id: 435904,
+    slug: "vanitas",
+    title: "Still Life with a Skull and a Writing Quill",
+    artist: "Pieter Claesz",
+    date: "1628",
+    medium: "Oil on wood · dimensional interpretation",
+    description: "Time, knowledge, and mortality move from a small painted frame into a restrained spatial relief.",
+    orbit: "0deg 76deg 118%",
+    kind: "dimensional",
+  },
+  {
+    id: 250945,
+    slug: "perseus-and-andromeda",
+    title: "Perseus and Andromeda in Landscape",
+    artist: "Unknown Roman artist",
+    date: "1st century BCE",
+    medium: "Fresco · dimensional interpretation",
+    description: "A Roman painted landscape becomes a broad spatial fragment with myth unfolding across its surface.",
+    orbit: "0deg 76deg 120%",
+    kind: "dimensional",
+  },
+  {
+    id: 436532,
+    slug: "self-portrait",
+    title: "Self-Portrait with a Straw Hat",
+    artist: "Vincent van Gogh",
+    date: "1887",
+    medium: "Oil on canvas · dimensional interpretation",
+    description: "Directional strokes turn the artist's face into a shallow field of color, texture, and motion.",
+    orbit: "0deg 76deg 122%",
+    kind: "dimensional",
   },
 ];
 
@@ -77,6 +148,7 @@ const viewer = document.querySelector("#viewer") as HTMLElement & {
 const shell = document.querySelector(".viewer-shell") as HTMLElement;
 const poster = document.querySelector("#viewer-poster") as HTMLImageElement;
 const title = document.querySelector("#work-title") as HTMLElement;
+const workKind = document.querySelector("#work-kind") as HTMLElement;
 const meta = document.querySelector("#work-meta") as HTMLElement;
 const description = document.querySelector("#work-description") as HTMLElement;
 const metLink = document.querySelector("#met-link") as HTMLAnchorElement;
@@ -119,6 +191,7 @@ const stageViewer = document.querySelector("#stage-viewer") as HTMLElement & {
   jumpCameraToGoal?: () => void;
 };
 const stageTitle = document.querySelector("#stage-title") as HTMLElement;
+const stageKind = document.querySelector("#stage-kind") as HTMLElement;
 const stageMeta = document.querySelector("#stage-meta") as HTMLElement;
 const stageDescription = document.querySelector("#stage-description") as HTMLElement;
 const stageCounter = document.querySelector("#stage-counter") as HTMLElement;
@@ -128,6 +201,11 @@ const stageMove = document.querySelector("#stage-move") as HTMLButtonElement;
 const stageOrbit = document.querySelector("#stage-orbit") as HTMLButtonElement;
 const stageInfoToggle = document.querySelector("#stage-info-toggle") as HTMLButtonElement;
 const stageSound = document.querySelector("#stage-sound") as HTMLButtonElement;
+const stageHand = document.querySelector("#stage-hand") as HTMLButtonElement;
+const handCanvas = document.querySelector("#hand-canvas") as HTMLCanvasElement;
+const handReadout = document.querySelector("#hand-readout") as HTMLElement;
+const handCount = document.querySelector("#hand-count") as HTMLElement;
+const handGesture = document.querySelector("#hand-gesture") as HTMLElement;
 const stageGuide = document.querySelector("#stage-guide") as HTMLElement;
 const stagePlace = document.querySelector("#stage-place") as HTMLButtonElement;
 const stagePrevious = document.querySelector("#stage-previous") as HTMLButtonElement;
@@ -152,10 +230,37 @@ let stageX = 0;
 let stageY = 0;
 let stageScale = 1;
 let audioContext: AudioContext | null = null;
+let handLandmarker: HandLandmarkerLike | null = null;
+let handTrackingActive = false;
+let handFrame = 0;
+let lastHandVideoTime = -1;
+let lastHandInference = 0;
+let handTheta = 28;
+let handRotationDelta = 0;
+let pinchAnchorX: number | null = null;
+let twoHandBaseline: { distance: number; scale: number } | null = null;
 const activePointers = new Map<number, { x: number; y: number }>();
 let gestureOrigin = { x: 0, y: 0, stageX: 0, stageY: 0, distance: 0, scale: 1 };
 
+type HandLandmark = { x: number; y: number; z: number };
+type HandResult = { landmarks: HandLandmark[][] };
+type HandLandmarkerLike = {
+  detectForVideo: (video: HTMLVideoElement, timestamp: number) => HandResult;
+};
+
+const handConnections = [
+  [0, 1], [1, 2], [2, 3], [3, 4],
+  [0, 5], [5, 6], [6, 7], [7, 8],
+  [5, 9], [9, 10], [10, 11], [11, 12],
+  [9, 13], [13, 14], [14, 15], [15, 16],
+  [13, 17], [17, 18], [18, 19], [19, 20], [0, 17],
+] as const;
+
 function path(scan: Scan, extension: "glb" | "usdz" | "jpg") {
+  if (scan.kind === "dimensional") {
+    if (extension === "jpg") return `./ar/artworks/${scan.slug}.jpg`;
+    return `./ar/models/${scan.slug}.${extension}`;
+  }
   const suffix = extension === "usdz" ? "-gallery.usdz" : `.${extension}`;
   const version = extension === "usdz" ? `?v=${arAssetVersion}` : "";
   return `./ar/met-3d/${scan.slug}${suffix}${version}`;
@@ -210,6 +315,223 @@ function playCue(kind: "open" | "select" | "place" | "mode" = "select") {
   }
 }
 
+function landmarkDistance(a: HandLandmark, b: HandLandmark) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function handCenter(hand: HandLandmark[]) {
+  const indices = [0, 5, 9, 13, 17];
+  return indices.reduce((center, index) => ({
+    x: center.x + hand[index].x / indices.length,
+    y: center.y + hand[index].y / indices.length,
+  }), { x: 0, y: 0 });
+}
+
+function drawHands(hands: HandLandmark[][]) {
+  const bounds = cameraStage.getBoundingClientRect();
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const width = Math.max(1, Math.round(bounds.width));
+  const height = Math.max(1, Math.round(bounds.height));
+  if (handCanvas.width !== width * dpr || handCanvas.height !== height * dpr) {
+    handCanvas.width = width * dpr;
+    handCanvas.height = height * dpr;
+  }
+  const context = handCanvas.getContext("2d");
+  if (!context) return;
+  context.setTransform(dpr, 0, 0, dpr, 0, 0);
+  context.clearRect(0, 0, width, height);
+
+  const videoWidth = cameraFeed.videoWidth || width;
+  const videoHeight = cameraFeed.videoHeight || height;
+  const cover = Math.max(width / videoWidth, height / videoHeight);
+  const drawnWidth = videoWidth * cover;
+  const drawnHeight = videoHeight * cover;
+  const offsetX = (width - drawnWidth) / 2;
+  const offsetY = (height - drawnHeight) / 2;
+  const point = (landmark: HandLandmark) => ({
+    x: offsetX + (1 - landmark.x) * drawnWidth,
+    y: offsetY + landmark.y * drawnHeight,
+  });
+
+  hands.forEach((hand, handIndex) => {
+    const color = handIndex === 0 ? "#d9ff72" : "#8ee9ff";
+    context.strokeStyle = color;
+    context.lineWidth = 1.5;
+    context.globalAlpha = .72;
+    handConnections.forEach(([from, to]) => {
+      const start = point(hand[from]);
+      const end = point(hand[to]);
+      context.beginPath();
+      context.moveTo(start.x, start.y);
+      context.lineTo(end.x, end.y);
+      context.stroke();
+    });
+
+    hand.forEach((landmark, index) => {
+      const position = point(landmark);
+      context.globalAlpha = 1;
+      context.fillStyle = index === 4 || index === 8 ? "#ffffff" : color;
+      context.beginPath();
+      context.arc(position.x, position.y, index === 4 || index === 8 ? 4.6 : 3, 0, Math.PI * 2);
+      context.fill();
+      if (index === 0 || index === 8) {
+        context.font = "600 10px ui-monospace, SFMono-Regular, Menlo, monospace";
+        context.fillStyle = color;
+        context.fillText(index === 0 ? `H${handIndex + 1}` : "08", position.x + 7, position.y - 7);
+      }
+    });
+
+    const thumb = point(hand[4]);
+    const index = point(hand[8]);
+    const pinched = landmarkDistance(hand[4], hand[8]) < .075;
+    if (pinched) {
+      context.strokeStyle = "#fff";
+      context.lineWidth = 2;
+      context.beginPath();
+      context.arc((thumb.x + index.x) / 2, (thumb.y + index.y) / 2, 18, 0, Math.PI * 2);
+      context.stroke();
+    }
+  });
+  context.globalAlpha = 1;
+}
+
+function applyHandGestures(hands: HandLandmark[][]) {
+  handCount.textContent = `${hands.length} / 2`;
+  if (hands.length === 0) {
+    pinchAnchorX = null;
+    handRotationDelta = 0;
+    twoHandBaseline = null;
+    handGesture.textContent = "Raise one hand to begin";
+    return;
+  }
+
+  if (hands.length >= 2) {
+    pinchAnchorX = null;
+    handRotationDelta = 0;
+    const first = handCenter(hands[0]);
+    const second = handCenter(hands[1]);
+    const distance = Math.hypot(first.x - second.x, first.y - second.y);
+    if (!twoHandBaseline) twoHandBaseline = { distance: Math.max(distance, .05), scale: stageScale };
+    const targetScale = Math.max(.5, Math.min(1.9, twoHandBaseline.scale * distance / twoHandBaseline.distance));
+    stageScale += (targetScale - stageScale) * .22;
+    setStageTransform();
+    handGesture.textContent = `Two-hand scale · ${Math.round(stageScale * 100)}%`;
+    return;
+  }
+
+  twoHandBaseline = null;
+  const hand = hands[0];
+  const center = handCenter(hand);
+  const mirroredX = 1 - center.x;
+  const pinched = landmarkDistance(hand[4], hand[8]) < .075;
+  if (!pinched) {
+    pinchAnchorX = null;
+    handRotationDelta = 0;
+    handGesture.textContent = "Pinch thumb + index to rotate";
+    return;
+  }
+
+  if (pinchAnchorX !== null) {
+    const rawDelta = mirroredX - pinchAnchorX;
+    handRotationDelta = handRotationDelta * .68 + rawDelta * .32;
+    if (Math.abs(handRotationDelta) > .0018) handTheta += handRotationDelta * 390;
+    const [, phi = "72deg", radius = "120%"] = scans[current].orbit.split(" ");
+    stageViewer.setAttribute("camera-orbit", `${handTheta}deg ${phi} ${radius}`);
+    stageViewer.jumpCameraToGoal?.();
+  }
+  pinchAnchorX = mirroredX;
+  handGesture.textContent = `Pinch rotate · ${Math.round(handTheta)}°`;
+}
+
+function handTrackingLoop(timestamp: number) {
+  if (!handTrackingActive) return;
+  if (
+    handLandmarker
+    && cameraFeed.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+    && cameraFeed.currentTime !== lastHandVideoTime
+    && timestamp - lastHandInference > 32
+  ) {
+    lastHandVideoTime = cameraFeed.currentTime;
+    lastHandInference = timestamp;
+    try {
+      const result = handLandmarker.detectForVideo(cameraFeed, timestamp);
+      drawHands(result.landmarks);
+      applyHandGestures(result.landmarks);
+    } catch {
+      handGesture.textContent = "Tracking interrupted · keep hands in frame";
+    }
+  }
+  handFrame = requestAnimationFrame(handTrackingLoop);
+}
+
+async function prepareHandLandmarker() {
+  if (handLandmarker) return handLandmarker;
+  stageHand.disabled = true;
+  handGesture.textContent = "Loading MediaPipe hand model…";
+  handReadout.hidden = false;
+  try {
+    const moduleUrl = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
+    const { FilesetResolver, HandLandmarker } = await import(/* @vite-ignore */ moduleUrl) as {
+      FilesetResolver: { forVisionTasks: (path: string) => Promise<unknown> };
+      HandLandmarker: { createFromOptions: (fileset: unknown, options: unknown) => Promise<HandLandmarkerLike> };
+    };
+    const fileset = await FilesetResolver.forVisionTasks(`${moduleUrl}/wasm`);
+    const options = (delegate: "GPU" | "CPU") => ({
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+        delegate,
+      },
+      runningMode: "VIDEO",
+      numHands: 2,
+      minHandDetectionConfidence: .55,
+      minHandPresenceConfidence: .52,
+      minTrackingConfidence: .52,
+    });
+    try {
+      handLandmarker = await HandLandmarker.createFromOptions(fileset, options("GPU"));
+    } catch {
+      handLandmarker = await HandLandmarker.createFromOptions(fileset, options("CPU"));
+    }
+    return handLandmarker;
+  } finally {
+    stageHand.disabled = false;
+  }
+}
+
+async function setHandTracking(active: boolean) {
+  if (active && (matchMedia("(pointer: coarse)").matches || innerWidth < 900)) return;
+  if (active) {
+    try {
+      await prepareHandLandmarker();
+    } catch {
+      handGesture.textContent = "Hand model could not load · check connection";
+      handReadout.hidden = false;
+      stageHand.classList.remove("is-active");
+      stageHand.setAttribute("aria-pressed", "false");
+      return;
+    }
+  }
+  handTrackingActive = active;
+  cameraStage.classList.toggle("hand-tracking", active);
+  stageHand.classList.toggle("is-active", active);
+  stageHand.setAttribute("aria-pressed", String(active));
+  handReadout.hidden = !active;
+  stageViewer.toggleAttribute("auto-rotate", !active && !stageMoveActive);
+  pinchAnchorX = null;
+  twoHandBaseline = null;
+  if (active) {
+    handTheta = Number.parseFloat(scans[current].orbit) || 0;
+    cancelAnimationFrame(handFrame);
+    handFrame = requestAnimationFrame(handTrackingLoop);
+    handGesture.textContent = "Raise one hand to begin";
+    playCue("mode");
+  } else {
+    cancelAnimationFrame(handFrame);
+    const context = handCanvas.getContext("2d");
+    context?.clearRect(0, 0, handCanvas.width, handCanvas.height);
+  }
+}
+
 function setStageTransform() {
   stageObject.style.setProperty("--stage-x", `${stageX}px`);
   stageObject.style.setProperty("--stage-y", `${stageY}px`);
@@ -236,7 +558,7 @@ function setStageMoveMode(active: boolean) {
   stageMove.setAttribute("aria-pressed", String(active));
   stageOrbit.classList.toggle("is-active", !active);
   stageOrbit.setAttribute("aria-pressed", String(!active));
-  stageViewer.toggleAttribute("auto-rotate", !active);
+  stageViewer.toggleAttribute("auto-rotate", !active && !handTrackingActive);
   stageGuide.querySelector("strong")!.textContent = active ? "Move the object with one finger" : "Orbit the object with one finger";
   stageGuide.querySelector("span")!.textContent = active ? "Drag anywhere on the object · pinch to resize" : "Drag to inspect · pinch to scale · tap Move to reposition";
   playCue("mode");
@@ -283,6 +605,7 @@ function openStage() {
 }
 
 function closeStage() {
+  void setHandTracking(false);
   cameraStream?.getTracks().forEach((track) => track.stop());
   cameraStream = null;
   cameraFeed.srcObject = null;
@@ -346,7 +669,8 @@ async function renderRelated() {
   try {
     const points = await loadAtlasPoints();
     if (request !== relatedRequest) return;
-    const anchorIndex = relatedAnchorIndices[current];
+    const exactIndex = points.findIndex((point) => point.id === scans[current].id);
+    const anchorIndex = exactIndex >= 0 ? exactIndex : (relatedAnchorIndices[current] ?? relatedAnchorIndices[0]);
     const anchor = points[anchorIndex];
     const neighbors = points
       .map((point, index) => ({
@@ -394,6 +718,7 @@ function selectScan(index: number) {
   showLoading();
 
   title.textContent = scan.title;
+  workKind.textContent = scan.kind === "scan" ? "Verified Met 3D scan" : "Met Open Access · dimensional work";
   meta.textContent = `${scan.artist} · ${scan.date} · ${scan.medium}`;
   description.textContent = scan.description;
   position.textContent = `${current + 1} / ${scans.length}`;
@@ -403,6 +728,7 @@ function selectScan(index: number) {
   poster.src = path(scan, "jpg");
   poster.alt = `Preview of the ${scan.title} 3D scan`;
   stageTitle.textContent = scan.title;
+  stageKind.textContent = scan.kind === "scan" ? "Verified Met 3D scan" : "Met Open Access · dimensional work";
   stageMeta.textContent = `${scan.artist} · ${scan.date} · ${scan.medium}`;
   stageDescription.textContent = scan.description;
   stageCounter.textContent = `${current + 1} / ${scans.length}`;
@@ -440,6 +766,7 @@ function selectScan(index: number) {
   }, reducedMotion.matches ? 0 : 120);
 
   if (!cameraStage.hidden) {
+    if (handTrackingActive) handTheta = Number.parseFloat(scan.orbit) || 0;
     stageObject.classList.add("is-switching");
     window.setTimeout(() => stageObject.classList.remove("is-switching"), reducedMotion.matches ? 0 : 420);
     playCue("select");
@@ -504,6 +831,8 @@ stageSound.addEventListener("click", () => {
   stageSound.setAttribute("aria-pressed", String(stageSoundActive));
   if (stageSoundActive) playCue("mode");
 });
+
+stageHand.addEventListener("click", () => void setHandTracking(!handTrackingActive));
 
 stagePlace.addEventListener("click", () => {
   stagePlaced = !stagePlaced;

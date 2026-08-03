@@ -561,6 +561,7 @@ footer { width: min(1440px, 100%); min-height: 90px; margin: 0 auto; padding: 1.
   transition: opacity .35s var(--ease);
 }
 .camera-stage.has-camera .camera-feed { opacity: 1; }
+.camera-stage.hand-tracking .camera-feed { transform: scaleX(-1); }
 .camera-fallback {
   z-index: -5;
   background: #17191f;
@@ -708,6 +709,38 @@ footer { width: min(1440px, 100%); min-height: 90px; margin: 0 auto; padding: 1.
   touch-action: none;
 }
 .stage-move-surface[hidden] { display: none; }
+.hand-canvas {
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+.camera-stage.hand-tracking .hand-canvas { opacity: 1; }
+.hand-readout {
+  position: absolute;
+  z-index: 15;
+  top: max(5.6rem, calc(env(safe-area-inset-top) + 5rem));
+  left: max(1rem, env(safe-area-inset-left));
+  width: 18rem;
+  padding: .75rem .85rem;
+  background: rgba(7, 10, 11, .68);
+  box-shadow: inset 0 0 0 1px rgba(217, 255, 114, .38);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  pointer-events: none;
+}
+.hand-readout[hidden] { display: none; }
+.hand-readout > div { display: flex; align-items: center; gap: .45rem; color: #d9ff72; }
+.hand-readout > div i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+.hand-readout strong { font-size: .68rem; letter-spacing: .08em; }
+.hand-readout #hand-count { margin-left: auto; font-size: .66rem; }
+.hand-readout p { margin: .55rem 0 .4rem; color: #fff; font-size: .72rem; line-height: 1.25; }
+.hand-readout small { color: rgba(255, 255, 255, .62); font-size: .55rem; line-height: 1.35; }
+.camera-stage.hand-tracking .stage-guide { opacity: 0; transform: translateY(-8px); }
+.desktop-only { display: none !important; }
 
 .stage-info {
   position: absolute;
@@ -899,6 +932,11 @@ footer { width: min(1440px, 100%); min-height: 90px; margin: 0 auto; padding: 1.
   .stage-info { bottom: max(6.5rem, calc(env(safe-area-inset-bottom) + 5.6rem)); }
   .stage-guide { max-width: calc(100% - 6rem); }
   .stage-guide span { overflow: hidden; text-overflow: ellipsis; }
+}
+
+@media (min-width: 900px) and (pointer: fine) {
+  .desktop-only { display: grid !important; }
+  .camera-stage.hand-tracking .stage-object { width: min(66vw, 62rem); }
 }
 
 @media (max-width: 480px) {

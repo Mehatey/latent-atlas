@@ -69,7 +69,7 @@
         </model-viewer>
 
         <div class="object-state glass" aria-live="polite">
-          <span class="verified"><i></i> Verified Met 3D scan</span>
+          <span class="verified"><i></i> <span id="work-kind">Verified Met 3D scan</span></span>
           <h2 id="work-title">Marble Sarcophagus with Lions Felling Antelope</h2>
           <p id="work-meta">Roman · 3rd century · Marble</p>
         </div>
@@ -147,9 +147,9 @@
         <div class="collection-heading">
           <div>
             <h2>Choose an object</h2>
-            <p>Four genuine Met scans. Select, inspect, then place.</p>
+            <p>Four genuine Met scans plus six wide dimensional works.</p>
           </div>
-          <span id="scan-position" aria-live="polite">1 / 4</span>
+          <span id="scan-position" aria-live="polite">1 / 10</span>
         </div>
 
         <nav class="scan-rail" aria-label="Choose a verified Met 3D scan">
@@ -168,6 +168,30 @@
           <button class="scan-option" data-work="3">
             <img src="./ar/met-3d/ngya-post.jpg" alt="Ngya commemorative post" />
             <span><b>Ngya (Commemorative Post)</b><small>Bongo · Mahogany</small></span>
+          </button>
+          <button class="scan-option" data-work="4">
+            <img src="./ar/artworks/heart-of-the-andes.jpg" alt="Heart of the Andes" />
+            <span><b>Heart of the Andes</b><small>Frederic Edwin Church · Dimensional work</small></span>
+          </button>
+          <button class="scan-option" data-work="5">
+            <img src="./ar/artworks/horse-fair.jpg" alt="The Horse Fair" />
+            <span><b>The Horse Fair</b><small>Rosa Bonheur · Dimensional work</small></span>
+          </button>
+          <button class="scan-option" data-work="6">
+            <img src="./ar/artworks/cezanne-primroses.jpg" alt="Still Life with Apples and a Pot of Primroses" />
+            <span><b>Still Life with Apples and Primroses</b><small>Paul Cézanne · Dimensional work</small></span>
+          </button>
+          <button class="scan-option" data-work="7">
+            <img src="./ar/artworks/vanitas.jpg" alt="Still Life with a Skull and a Writing Quill" />
+            <span><b>Still Life with a Skull</b><small>Pieter Claesz · Dimensional work</small></span>
+          </button>
+          <button class="scan-option" data-work="8">
+            <img src="./ar/artworks/perseus-and-andromeda.jpg" alt="Perseus and Andromeda in Landscape" />
+            <span><b>Perseus and Andromeda</b><small>Roman fresco · Dimensional work</small></span>
+          </button>
+          <button class="scan-option" data-work="9">
+            <img src="./ar/artworks/self-portrait.jpg" alt="Self-Portrait with a Straw Hat" />
+            <span><b>Self-Portrait with a Straw Hat</b><small>Vincent van Gogh · Dimensional work</small></span>
           </button>
         </nav>
 
@@ -192,6 +216,7 @@
 
     <section id="camera-stage" class="camera-stage" hidden aria-label="Latent Atlas camera stage">
       <video id="camera-feed" class="camera-feed" autoplay muted playsinline aria-hidden="true"></video>
+      <canvas id="hand-canvas" class="hand-canvas" aria-hidden="true"></canvas>
       <div class="camera-fallback" aria-hidden="true"></div>
       <div class="camera-shade" aria-hidden="true"></div>
 
@@ -228,8 +253,8 @@
 
       <aside id="stage-info" class="stage-info stage-glass" aria-live="polite">
         <div class="stage-info-heading">
-          <span><i></i> Verified Met 3D scan</span>
-          <b id="stage-counter">1 / 4</b>
+          <span><i></i> <span id="stage-kind">Verified Met 3D scan</span></span>
+          <b id="stage-counter">1 / 10</b>
         </div>
         <h2 id="stage-title">Marble Sarcophagus with Lions Felling Antelope</h2>
         <p id="stage-meta">Roman · 3rd century · Marble</p>
@@ -254,7 +279,17 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4h3l4 4V6L8 10H5zM16 9c1 .8 1.5 1.8 1.5 3S17 14.2 16 15M18.5 6.5C20.2 8 21 9.8 21 12s-.8 4-2.5 5.5"/></svg>
           <span>Sound</span>
         </button>
+        <button id="stage-hand" class="desktop-only" type="button" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 12V6a1.5 1.5 0 0 1 3 0v4-6a1.5 1.5 0 0 1 3 0v6-5a1.5 1.5 0 0 1 3 0v6-3a1.5 1.5 0 0 1 3 0v5c0 5-3 8-7 8h-1c-3 0-5-1.5-7-4l-2-3a1.5 1.5 0 0 1 2.4-1.8L7.5 15z"/></svg>
+          <span>Hands</span>
+        </button>
       </nav>
+
+      <div id="hand-readout" class="hand-readout" hidden role="status">
+        <div><i></i><strong>HAND FIELD</strong><span id="hand-count">0 / 2</span></div>
+        <p id="hand-gesture">Raise one hand to begin</p>
+        <small>PINCH + MOVE / ROTATE&nbsp;&nbsp;·&nbsp;&nbsp;TWO HANDS / SCALE</small>
+      </div>
 
       <div id="stage-guide" class="stage-guide stage-glass" role="status">
         <strong>Compose the object in your room</strong>
