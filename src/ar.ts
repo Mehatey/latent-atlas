@@ -236,9 +236,13 @@ let handFrame = 0;
 let lastHandVideoTime = -1;
 let lastHandInference = 0;
 let handTheta = 28;
-let handRotationDelta = 0;
-let pinchAnchorX: number | null = null;
-let twoHandBaseline: { distance: number; scale: number } | null = null;
+let rotationAnchorX: number | null = null;
+let scaleAnchorY: number | null = null;
+let scaleAnchorValue = 1;
+let rotationVelocity = 0;
+let rotationGestureActive = false;
+let lastRotationSample = 0;
+let lastMomentumFrame = 0;
 const activePointers = new Map<number, { x: number; y: number }>();
 let gestureOrigin = { x: 0, y: 0, stageX: 0, stageY: 0, distance: 0, scale: 1 };
 
@@ -353,8 +357,9 @@ function drawHands(hands: HandLandmark[][]) {
     y: offsetY + landmark.y * drawnHeight,
   });
 
-  hands.forEach((hand, handIndex) => {
-    const color = handIndex === 0 ? "#d9ff72" : "#8ee9ff";
+  hands.forEach((hand) => {
+    const role = 1 - handCenter(hand).x < .5 ? "SCALE" : "SPIN";
+    const color = role === "SCALE" ? "#8ee9ff" : "#d9ff72";
     context.strokeStyle = color;
     context.lineWidth = 1.5;
     context.globalAlpha = .72;
@@ -374,10 +379,10 @@ function drawHands(hands: HandLandmark[][]) {
       context.beginPath();
       context.arc(position.x, position.y, index === 4 || index === 8 ? 4.6 : 3, 0, Math.PI * 2);
       context.fill();
-      if (index === 0 || index === 8) {
+      if (index === 0) {
         context.font = "600 10px ui-monospace, SFMono-Regular, Menlo, monospace";
         context.fillStyle = color;
-        context.fillText(index === 0 ? `H${handIndex + 1}` : "08", position.x + 7, position.y - 7);
+        context.fillText(role, position.x + 7, position.y - 7);
       }
     });
 
@@ -395,52 +400,81 @@ function drawHands(hands: HandLandmark[][]) {
   context.globalAlpha = 1;
 }
 
-function applyHandGestures(hands: HandLandmark[][]) {
+function applyHandGestures(hands: HandLandmark[][], timestamp: number) {
   handCount.textContent = `${hands.length} / 2`;
+  rotationGestureActive = false;
   if (hands.length === 0) {
-    pinchAnchorX = null;
-    handRotationDelta = 0;
-    twoHandBaseline = null;
-    handGesture.textContent = "Raise one hand to begin";
+    rotationAnchorX = null;
+    scaleAnchorY = null;
+    lastRotationSample = 0;
+    handGesture.textContent = "Left hand scales · right hand spins";
     return;
   }
 
-  if (hands.length >= 2) {
-    pinchAnchorX = null;
-    handRotationDelta = 0;
-    const first = handCenter(hands[0]);
-    const second = handCenter(hands[1]);
-    const distance = Math.hypot(first.x - second.x, first.y - second.y);
-    if (!twoHandBaseline) twoHandBaseline = { distance: Math.max(distance, .05), scale: stageScale };
-    const targetScale = Math.max(.5, Math.min(1.9, twoHandBaseline.scale * distance / twoHandBaseline.distance));
-    stageScale += (targetScale - stageScale) * .22;
+  const controls = hands
+    .map((hand) => {
+      const center = handCenter(hand);
+      return { hand, x: 1 - center.x, y: center.y };
+    })
+    .sort((a, b) => a.x - b.x);
+  const scaleControl = controls.length > 1 ? controls[0] : controls[0].x < .5 ? controls[0] : null;
+  const rotationControl = controls.length > 1 ? controls.at(-1)! : controls[0].x >= .5 ? controls[0] : null;
+  const isPinched = (control: typeof controls[number] | null) => Boolean(
+    control && landmarkDistance(control.hand[4], control.hand[8]) < .075,
+  );
+
+  if (scaleControl && isPinched(scaleControl)) {
+    if (scaleAnchorY === null) {
+      scaleAnchorY = scaleControl.y;
+      scaleAnchorValue = stageScale;
+    }
+    const targetScale = Math.max(.5, Math.min(1.9, scaleAnchorValue * Math.exp((scaleAnchorY - scaleControl.y) * 2.2)));
+    stageScale += (targetScale - stageScale) * .18;
     setStageTransform();
-    handGesture.textContent = `Two-hand scale · ${Math.round(stageScale * 100)}%`;
-    return;
+  } else {
+    scaleAnchorY = null;
   }
 
-  twoHandBaseline = null;
-  const hand = hands[0];
-  const center = handCenter(hand);
-  const mirroredX = 1 - center.x;
-  const pinched = landmarkDistance(hand[4], hand[8]) < .075;
-  if (!pinched) {
-    pinchAnchorX = null;
-    handRotationDelta = 0;
-    handGesture.textContent = "Pinch thumb + index to rotate";
-    return;
+  if (rotationControl && isPinched(rotationControl)) {
+    rotationGestureActive = true;
+    if (rotationAnchorX !== null && lastRotationSample > 0) {
+      const elapsed = Math.max(.016, Math.min(.08, (timestamp - lastRotationSample) / 1000));
+      const targetVelocity = Math.max(-540, Math.min(540, ((rotationControl.x - rotationAnchorX) / elapsed) * 300));
+      rotationVelocity = rotationVelocity * .55 + targetVelocity * .45;
+    }
+    rotationAnchorX = rotationControl.x;
+    lastRotationSample = timestamp;
+  } else {
+    rotationAnchorX = null;
+    lastRotationSample = 0;
   }
 
-  if (pinchAnchorX !== null) {
-    const rawDelta = mirroredX - pinchAnchorX;
-    handRotationDelta = handRotationDelta * .68 + rawDelta * .32;
-    if (Math.abs(handRotationDelta) > .0018) handTheta += handRotationDelta * 390;
-    const [, phi = "72deg", radius = "120%"] = scans[current].orbit.split(" ");
-    stageViewer.setAttribute("camera-orbit", `${handTheta}deg ${phi} ${radius}`);
-    stageViewer.jumpCameraToGoal?.();
+  if (rotationGestureActive && scaleAnchorY !== null) {
+    handGesture.textContent = `Scale ${Math.round(stageScale * 100)}% · spin ${Math.round(rotationVelocity)}°/s`;
+  } else if (rotationGestureActive) {
+    handGesture.textContent = `Right hand spinning · ${Math.round(rotationVelocity)}°/s`;
+  } else if (scaleAnchorY !== null) {
+    handGesture.textContent = `Left hand scaling · ${Math.round(stageScale * 100)}%`;
+  } else {
+    handGesture.textContent = "Pinch left to scale · pinch right to spin";
   }
-  pinchAnchorX = mirroredX;
-  handGesture.textContent = `Pinch rotate · ${Math.round(handTheta)}°`;
+}
+
+function updateHandMomentum(timestamp: number) {
+  if (!lastMomentumFrame) lastMomentumFrame = timestamp;
+  const elapsed = Math.max(0, Math.min(.05, (timestamp - lastMomentumFrame) / 1000));
+  lastMomentumFrame = timestamp;
+  if (timestamp - lastHandInference > 120) rotationGestureActive = false;
+  if (reducedMotion.matches && !rotationGestureActive) rotationVelocity = 0;
+  if (!rotationGestureActive) rotationVelocity *= Math.exp(-2.35 * elapsed);
+  if (Math.abs(rotationVelocity) < .08) {
+    rotationVelocity = 0;
+    return;
+  }
+  handTheta += rotationVelocity * elapsed;
+  const [, phi = "72deg", radius = "120%"] = scans[current].orbit.split(" ");
+  stageViewer.setAttribute("camera-orbit", `${handTheta}deg ${phi} ${radius}`);
+  stageViewer.jumpCameraToGoal?.();
 }
 
 function handTrackingLoop(timestamp: number) {
@@ -456,11 +490,12 @@ function handTrackingLoop(timestamp: number) {
     try {
       const result = handLandmarker.detectForVideo(cameraFeed, timestamp);
       drawHands(result.landmarks);
-      applyHandGestures(result.landmarks);
+      applyHandGestures(result.landmarks, timestamp);
     } catch {
       handGesture.textContent = "Tracking interrupted · keep hands in frame";
     }
   }
+  updateHandMomentum(timestamp);
   handFrame = requestAnimationFrame(handTrackingLoop);
 }
 
@@ -517,13 +552,17 @@ async function setHandTracking(active: boolean) {
   stageHand.setAttribute("aria-pressed", String(active));
   handReadout.hidden = !active;
   stageViewer.toggleAttribute("auto-rotate", !active && !stageMoveActive);
-  pinchAnchorX = null;
-  twoHandBaseline = null;
+  rotationAnchorX = null;
+  scaleAnchorY = null;
+  rotationGestureActive = false;
+  lastRotationSample = 0;
+  lastMomentumFrame = 0;
   if (active) {
     handTheta = Number.parseFloat(scans[current].orbit) || 0;
+    rotationVelocity = 0;
     cancelAnimationFrame(handFrame);
     handFrame = requestAnimationFrame(handTrackingLoop);
-    handGesture.textContent = "Raise one hand to begin";
+    handGesture.textContent = "Left hand scales · right hand spins";
     playCue("mode");
   } else {
     cancelAnimationFrame(handFrame);
@@ -766,7 +805,12 @@ function selectScan(index: number) {
   }, reducedMotion.matches ? 0 : 120);
 
   if (!cameraStage.hidden) {
-    if (handTrackingActive) handTheta = Number.parseFloat(scan.orbit) || 0;
+    if (handTrackingActive) {
+      handTheta = Number.parseFloat(scan.orbit) || 0;
+      rotationVelocity = 0;
+      rotationAnchorX = null;
+      lastRotationSample = 0;
+    }
     stageObject.classList.add("is-switching");
     window.setTimeout(() => stageObject.classList.remove("is-switching"), reducedMotion.matches ? 0 : 420);
     playCue("select");
