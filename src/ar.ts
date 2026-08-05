@@ -138,7 +138,7 @@ const scans: Scan[] = [
 // Each scan is paired with a comparable object already embedded in the atlas.
 // Related cards are the nearest spatial neighbors around that anchor.
 const relatedAnchorIndices = [1118, 54, 843, 534];
-const arAssetVersion = "20260803b";
+const arAssetVersion = "20260805c";
 
 const viewer = document.querySelector("#viewer") as HTMLElement & {
   cameraOrbit?: string;
@@ -264,7 +264,8 @@ const handConnections = [
 function path(scan: Scan, extension: "glb" | "usdz" | "jpg") {
   if (scan.kind === "dimensional") {
     if (extension === "jpg") return `./ar/artworks/${scan.slug}.jpg`;
-    return `./ar/models/${scan.slug}.${extension}`;
+    const version = extension === "usdz" ? `?v=${arAssetVersion}` : "";
+    return `./ar/models/${scan.slug}.${extension}${version}`;
   }
   const suffix = extension === "usdz" ? "-gallery.usdz" : `.${extension}`;
   const version = extension === "usdz" ? `?v=${arAssetVersion}` : "";
