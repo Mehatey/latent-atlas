@@ -138,7 +138,7 @@ const scans: Scan[] = [
 // Each scan is paired with a comparable object already embedded in the atlas.
 // Related cards are the nearest spatial neighbors around that anchor.
 const relatedAnchorIndices = [1118, 54, 843, 534];
-const arAssetVersion = "20260805d";
+const arAssetVersion = "20260805e";
 
 const viewer = document.querySelector("#viewer") as HTMLElement & {
   cameraOrbit?: string;
