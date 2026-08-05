@@ -256,6 +256,7 @@ function usda(work: Work, g: Awaited<ReturnType<typeof makeGlb>>) {
     def Mesh "${name}" (
       prepend apiSchemas = ["MaterialBindingAPI"]
     ) {
+      uniform token subdivisionScheme = "none"
       int[] faceVertexCounts = [4]
       int[] faceVertexIndices = [0, 1, 2, 3]
       point3f[] points = [(${x-width/2}, ${-height/2}, ${z}), (${x+width/2}, ${-height/2}, ${z}), (${x+width/2}, ${height/2}, ${z}), (${x-width/2}, ${height/2}, ${z})]
