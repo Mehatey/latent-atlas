@@ -243,6 +243,7 @@ let rotationVelocity = 0;
 let rotationGestureActive = false;
 let lastRotationSample = 0;
 let lastMomentumFrame = 0;
+let stageUiIdleTimer = 0;
 const activePointers = new Map<number, { x: number; y: number }>();
 let gestureOrigin = { x: 0, y: 0, stageX: 0, stageY: 0, distance: 0, scale: 1 };
 
@@ -359,10 +360,10 @@ function drawHands(hands: HandLandmark[][]) {
 
   hands.forEach((hand) => {
     const role = 1 - handCenter(hand).x < .5 ? "SCALE" : "SPIN";
-    const color = role === "SCALE" ? "#8ee9ff" : "#d9ff72";
+    const color = role === "SCALE" ? "#87c8d0" : "#e3a76f";
     context.strokeStyle = color;
-    context.lineWidth = 1.5;
-    context.globalAlpha = .72;
+    context.lineWidth = 1.35;
+    context.globalAlpha = .82;
     handConnections.forEach(([from, to]) => {
       const start = point(hand[from]);
       const end = point(hand[to]);
@@ -563,12 +564,24 @@ async function setHandTracking(active: boolean) {
     cancelAnimationFrame(handFrame);
     handFrame = requestAnimationFrame(handTrackingLoop);
     handGesture.textContent = "Left hand scales · right hand spins";
+    revealStageUi();
     playCue("mode");
   } else {
+    window.clearTimeout(stageUiIdleTimer);
+    cameraStage.classList.remove("is-ui-idle");
     cancelAnimationFrame(handFrame);
     const context = handCanvas.getContext("2d");
     context?.clearRect(0, 0, handCanvas.width, handCanvas.height);
   }
+}
+
+function revealStageUi() {
+  window.clearTimeout(stageUiIdleTimer);
+  cameraStage.classList.remove("is-ui-idle");
+  if (!handTrackingActive) return;
+  stageUiIdleTimer = window.setTimeout(() => {
+    cameraStage.classList.add("is-ui-idle");
+  }, 2200);
 }
 
 function setStageTransform() {
@@ -644,6 +657,8 @@ function openStage() {
 }
 
 function closeStage() {
+  window.clearTimeout(stageUiIdleTimer);
+  cameraStage.classList.remove("is-ui-idle");
   void setHandTracking(false);
   cameraStream?.getTracks().forEach((track) => track.stop());
   cameraStream = null;
@@ -877,6 +892,8 @@ stageSound.addEventListener("click", () => {
 });
 
 stageHand.addEventListener("click", () => void setHandTracking(!handTrackingActive));
+cameraStage.addEventListener("pointermove", revealStageUi, { passive: true });
+cameraStage.addEventListener("pointerdown", revealStageUi, { passive: true });
 
 stagePlace.addEventListener("click", () => {
   stagePlaced = !stagePlaced;
@@ -936,7 +953,22 @@ stageMoveSurface.addEventListener("pointerup", releasePointer);
 stageMoveSurface.addEventListener("pointercancel", releasePointer);
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !cameraStage.hidden) closeStage();
+  if (cameraStage.hidden) return;
+  if (event.key === "Escape") closeStage();
+  if (event.repeat) return;
+  if (event.key.toLowerCase() === "h") {
+    event.preventDefault();
+    void setHandTracking(!handTrackingActive);
+  }
+  if (event.key === "ArrowLeft") {
+    event.preventDefault();
+    selectScan(current - 1);
+  }
+  if (event.key === "ArrowRight") {
+    event.preventDefault();
+    selectScan(current + 1);
+  }
+  revealStageUi();
 });
 
 launch.addEventListener("message", (event: Event) => {

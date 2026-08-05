@@ -937,85 +937,111 @@ footer { width: min(1440px, 100%); min-height: 90px; margin: 0 auto; padding: 1.
 
 @media (min-width: 900px) and (pointer: fine) {
   .desktop-only { display: grid !important; }
-  .camera-stage.hand-tracking .stage-object { width: min(66vw, 62rem); }
-  .camera-stage.hand-tracking .camera-shade { background: linear-gradient(180deg, rgba(5, 6, 9, .24), transparent 18%, transparent 76%, rgba(5, 6, 9, .34)); }
+  .camera-stage.hand-tracking .stage-object { top: 50%; width: min(64vw, 60rem); height: min(78vh, 58rem); }
+  .camera-stage.hand-tracking .camera-feed { filter: saturate(.82) contrast(1.04) brightness(.94); }
+  .camera-stage.hand-tracking .camera-shade { background: linear-gradient(180deg, rgba(5, 6, 9, .16), transparent 20%, transparent 70%, rgba(5, 6, 9, .28)); }
   .camera-stage.hand-tracking .stage-header {
     left: 1rem;
     top: 1rem;
     width: auto;
-    min-width: 15rem;
-    height: 50px;
+    min-width: 13.5rem;
+    height: 44px;
     translate: 0;
-    border-radius: 12px;
-    grid-template-columns: 42px 1fr auto;
-    background: rgba(8, 9, 12, .54);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12);
+    border-radius: 2px;
+    grid-template-columns: 36px 1fr auto;
+    padding: 0 .4rem;
+    background: rgba(7, 8, 10, .76);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    transition: opacity .2s ease, transform .2s var(--ease);
   }
-  .camera-stage.hand-tracking .stage-icon-button { width: 38px; height: 38px; border-radius: 9px; }
-  .camera-stage.hand-tracking .stage-brand { font-size: 1rem; }
-  .camera-stage.hand-tracking .camera-status { height: 32px; padding: 0 .65rem; }
+  .camera-stage.hand-tracking .stage-icon-button { width: 32px; height: 32px; border-radius: 2px; background: transparent; font-size: 1.25rem; }
+  .camera-stage.hand-tracking .stage-brand { font: 550 .86rem/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; letter-spacing: -.01em; }
+  .camera-stage.hand-tracking .stage-brand i { font-style: normal; }
+  .camera-stage.hand-tracking .camera-status { height: 28px; padding: 0 .55rem; border-radius: 2px; background: transparent; font-size: .62rem; }
+  .camera-stage.hand-tracking .camera-status i { width: 5px; height: 5px; background: #f1efe8; box-shadow: none; }
+  .camera-stage.hand-tracking .camera-status span { font-size: 0; }
+  .camera-stage.hand-tracking .camera-status span::after { content: "Live"; font-size: .62rem; }
   .camera-stage.hand-tracking .stage-guide { display: none; }
   .camera-stage.hand-tracking .stage-info {
     left: 1rem;
     bottom: 1rem;
-    width: min(21rem, calc(100% - 2rem));
-    padding: .85rem 1rem;
-    border-radius: 12px;
-    background: rgba(8, 9, 12, .66);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12);
-  }
-  .camera-stage.hand-tracking .stage-info-heading,
-  .camera-stage.hand-tracking .stage-info #stage-description { display: none; }
-  .camera-stage.hand-tracking .stage-info h2 { margin: 0 0 .3rem; font-size: 1.1rem; line-height: 1.1; }
-  .camera-stage.hand-tracking .stage-info #stage-meta { font-size: .7rem; }
-  .camera-stage.hand-tracking .stage-info a { margin-top: .55rem; font-size: .68rem; }
-  .camera-stage.hand-tracking .stage-tools {
-    top: 1rem;
-    right: 1rem;
-    width: 50px;
-    translate: 0;
-    padding: 0;
-    background: transparent;
+    width: min(24rem, calc(100% - 2rem));
+    padding: .8rem .9rem .75rem;
+    border-radius: 2px;
+    background: rgba(7, 8, 10, .78);
     box-shadow: none;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+  .camera-stage.hand-tracking .stage-info-heading,
+  .camera-stage.hand-tracking .stage-info #stage-description { display: none; }
+  .camera-stage.hand-tracking .stage-info h2 { margin: 0 0 .3rem; max-width: 32ch; font-size: 1rem; font-weight: 620; line-height: 1.15; letter-spacing: -.015em; }
+  .camera-stage.hand-tracking .stage-info #stage-meta { color: rgba(255, 255, 255, .72); font-size: .68rem; }
+  .camera-stage.hand-tracking .stage-info a { margin-top: .5rem; color: rgba(255, 255, 255, .9); font-size: .64rem; font-weight: 560; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, .38); text-underline-offset: 3px; }
+  .camera-stage.hand-tracking .stage-tools {
+    top: 1rem;
+    right: 1rem;
+    width: 44px;
+    translate: 0;
+    padding: 0;
+    border-radius: 2px;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    transition: opacity .2s ease, transform .2s var(--ease);
+  }
   .camera-stage.hand-tracking .stage-tools button:not(#stage-hand) { display: none; }
   .camera-stage.hand-tracking #stage-hand {
-    min-width: 50px;
-    min-height: 50px;
-    border-radius: 12px;
-    background: rgba(8, 9, 12, .66);
-    box-shadow: inset 0 0 0 1px rgba(217, 255, 114, .35);
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 2px;
+    background: rgba(7, 8, 10, .76);
+    color: #f1efe8;
+    box-shadow: none;
   }
   .camera-stage.hand-tracking .hand-readout {
     top: 1rem;
     left: 50%;
     width: auto;
-    min-width: 18rem;
+    min-width: 17rem;
     translate: -50% 0;
-    padding: .6rem .85rem;
-    border-radius: 999px;
-    background: rgba(8, 9, 12, .62);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14);
+    padding: .55rem .75rem;
+    border-radius: 2px;
+    background: rgba(7, 8, 10, .72);
+    box-shadow: none;
     text-align: center;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    transition: opacity .2s ease, transform .2s var(--ease);
   }
   .camera-stage.hand-tracking .hand-readout > div,
   .camera-stage.hand-tracking .hand-readout small { display: none; }
-  .camera-stage.hand-tracking .hand-readout p { margin: 0; font-size: .7rem; color: rgba(255, 255, 255, .88); }
+  .camera-stage.hand-tracking .hand-readout p { margin: 0; font-size: .66rem; color: rgba(255, 255, 255, .88); }
   .camera-stage.hand-tracking .stage-dock {
-    width: 128px;
-    min-height: 58px;
-    grid-template-columns: 54px 54px;
+    width: 98px;
+    min-height: 44px;
+    grid-template-columns: 44px 44px;
     gap: .35rem;
-    padding: .2rem;
-    border-radius: 13px;
-    background: rgba(8, 9, 12, .56);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12);
+    padding: 0;
+    border-radius: 2px;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    transition: opacity .2s ease, transform .2s var(--ease);
   }
   .camera-stage.hand-tracking .stage-dock-center { display: none; }
-  .camera-stage.hand-tracking .stage-arrow { width: 54px; height: 54px; border-radius: 10px; background: rgba(255, 255, 255, .08); }
+  .camera-stage.hand-tracking .stage-arrow { width: 44px; height: 44px; border-radius: 2px; background: rgba(7, 8, 10, .76); font-size: 1rem; }
+  .camera-stage.hand-tracking.is-ui-idle .stage-header,
+  .camera-stage.hand-tracking.is-ui-idle .stage-tools,
+  .camera-stage.hand-tracking.is-ui-idle .hand-readout,
+  .camera-stage.hand-tracking.is-ui-idle .stage-dock { opacity: 0; pointer-events: none; }
+  .camera-stage.hand-tracking.is-ui-idle .stage-header,
+  .camera-stage.hand-tracking.is-ui-idle .hand-readout,
+  .camera-stage.hand-tracking.is-ui-idle .stage-tools { transform: translateY(-6px); }
+  .camera-stage.hand-tracking.is-ui-idle .stage-dock { transform: translateY(6px); }
 }
 
 @media (max-width: 480px) {
