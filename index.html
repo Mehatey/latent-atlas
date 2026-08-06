@@ -23,13 +23,11 @@
       <section id="arrival" aria-labelledby="arrival-title">
         <p class="eyebrow"><span></span> The Metropolitan Museum of Art / open collection</p>
         <h1 id="arrival-title"><i>Latent</i><br />Atlas</h1>
-        <p class="arrival-copy">A museum, rearranged by machine perception.<br />Follow an idea, not a label.</p>
+        <p class="arrival-copy">1,500 Met works, rearranged by resemblance and meaning.</p>
         <div class="arrival-actions">
           <button id="enter" type="button">enter the field <b>↗</b></button>
-          <span class="arrival-note">1,500 works · 512 dimensions · in your browser</span>
         </div>
         <div class="prompt-bank" aria-label="Suggested semantic searches">
-          <span>begin with a feeling</span>
           <button type="button" data-query="storms at sea">storms at sea</button>
           <button type="button" data-query="gold and shadow">gold and shadow</button>
           <button type="button" data-query="a quiet interior">a quiet interior</button>
@@ -47,8 +45,13 @@
       <label class="sr-only" for="q">Search the collection by meaning</label>
       <input id="q" type="text" placeholder="" aria-describedby="model-status" />
       <button type="submit" id="go" aria-label="Search the collection">&#8594;</button>
+      <button type="button" id="shuffle" aria-label="Shuffle artwork positions" aria-describedby="shuffle-description">
+        <span class="shuffle-mark" aria-hidden="true">⤨</span><span class="shuffle-label">shuffle field</span>
+      </button>
+      <span id="shuffle-description" class="sr-only">Temporarily randomizes the artwork field. Semantic search restores the meaningful atlas.</span>
       <span id="model-status" class="status" aria-live="polite"></span>
     </form>
+    <a id="ar-link" href="./ar.html" aria-label="Open artworks in augmented reality">AR works <span>↗</span></a>
 
     <!-- result count, above the matches strip -->
     <div id="result-count" hidden></div>
@@ -78,12 +81,13 @@
     <button id="guide-toggle" type="button" aria-expanded="false" aria-controls="field-guide">how to explore</button>
     <aside id="field-guide" hidden aria-label="How to explore Latent Atlas">
       <button id="guide-close" type="button" aria-label="Close exploration guide">×</button>
-      <p class="guide-kicker">field notes / 01</p>
+      <p class="guide-kicker">field notes</p>
       <h2>Follow the <i>feeling.</i></h2>
       <ol>
-        <li><b>01</b><span>Type an idea. CLIP compares its meaning against every artwork.</span></li>
-        <li><b>02</b><span>Click a work to reveal its nearest visual neighbours.</span></li>
-        <li><b>03</b><span>Orbit freely. This map is a projection, not a category system.</span></li>
+        <li><b>find</b><span>Type an idea. CLIP compares its meaning against every artwork.</span></li>
+        <li><b>link</b><span>Click a work to reveal its nearest visual neighbours.</span></li>
+        <li><b>orbit</b><span>Move freely. This map is a projection, not a category system.</span></li>
+        <li><b>shuffle</b><span>Randomize the field, then watch meaning assemble it again.</span></li>
       </ol>
       <p class="guide-footer">esc returns you to the full field</p>
     </aside>

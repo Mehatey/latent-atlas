@@ -5,6 +5,13 @@
   --line: rgba(255, 255, 255, 0.12);
   --accent: #d7d2c8;
   --signal: #d8cebb;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
   font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
 }
 
@@ -43,28 +50,34 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 
 /* --- arrival: one clear editorial thought before the visitor enters ---- */
 #experience { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
+#experience::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 42% 62% at 12% 48%, rgba(6,6,8,.98) 0%, rgba(6,6,8,.9) 38%, rgba(6,6,8,.36) 68%, transparent 100%);
+  transition: opacity .8s cubic-bezier(.16,1,.3,1);
+}
+body.has-entered #experience::before { opacity: 0; }
 #arrival {
-  position: absolute; left: clamp(24px, 6vw, 94px); top: 50%; width: min(480px, calc(100vw - 48px));
-  transform: translateY(-48%); pointer-events: auto;
+  position: absolute; left: clamp(48px, 7.5vw, 132px); top: 45%; width: min(560px, calc(100vw - 96px));
+  transform: translateY(-44%); pointer-events: auto;
   transition: opacity 0.7s ease, transform 0.9s cubic-bezier(.16,1,.3,1), visibility 0.7s;
 }
-#arrival.is-dismissed { opacity: 0; transform: translate(-16px, -48%); visibility: hidden; }
+#arrival.is-dismissed { opacity: 0; transform: translate(-16px, -44%); visibility: hidden; }
 .eyebrow {
-  display: flex; align-items: center; gap: 8px; margin: 0 0 20px; color: rgba(233,233,236,.66);
+  display: flex; align-items: center; gap: var(--space-sm); margin: 0 0 var(--space-xl); color: rgba(233,233,236,.66);
   font-size: 9px; text-transform: uppercase; letter-spacing: .14em;
 }
-.eyebrow span { width: 22px; height: 1px; background: var(--signal); box-shadow: 0 0 12px rgba(216,206,187,.7); }
+.eyebrow span { width: 32px; height: 1px; background: var(--signal); box-shadow: 0 0 12px rgba(216,206,187,.7); }
 #arrival h1 {
   margin: 0; font-family: ui-serif, "Iowan Old Style", "Baskerville", Georgia, serif;
-  font-size: clamp(72px, 10vw, 148px); font-weight: 400; letter-spacing: -.075em;
-  line-height: .7; color: #f2f0eb; text-shadow: 0 2px 28px rgba(0,0,0,.75);
+  font-size: clamp(72px, 7vw, 96px); font-weight: 400; letter-spacing: -.04em;
+  line-height: .84; color: #f2f0eb; text-shadow: 0 2px 28px rgba(0,0,0,.75); text-wrap: balance;
 }
 #arrival h1 i { font-weight: 400; }
 .arrival-copy {
-  max-width: 330px; margin: 32px 0 23px; color: rgba(233,233,236,.76); font-family: ui-serif, Georgia, serif;
-  font-size: clamp(16px, 1.45vw, 20px); line-height: 1.35; letter-spacing: -.015em;
+  max-width: 420px; margin: 40px 0 30px; color: rgba(233,233,236,.8); font-family: ui-serif, Georgia, serif;
+  font-size: clamp(17px, 1.25vw, 20px); line-height: 1.48; letter-spacing: -.01em; text-wrap: pretty;
 }
-.arrival-actions { display: flex; align-items: center; gap: 18px; }
+.arrival-actions { display: flex; align-items: center; }
 #enter {
   border: 1px solid rgba(216,206,187,.72); background: rgba(216,206,187,.94); color: #0b0b0d;
   padding: 12px 14px 11px; cursor: pointer; font: inherit; font-size: 10px; letter-spacing: .08em;
@@ -72,12 +85,10 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 }
 #enter b { margin-left: 11px; font-size: 15px; line-height: 0; }
 #enter:hover { transform: translateY(-2px); background: #fffdf7; }
-.arrival-note { color: rgba(233,233,236,.45); font-size: 9px; line-height: 1.55; max-width: 155px; }
-.prompt-bank { display: flex; flex-wrap: wrap; gap: 7px; max-width: 445px; margin-top: 32px; }
-.prompt-bank > span { width: 100%; color: rgba(233,233,236,.37); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 1px; }
+.prompt-bank { display: flex; flex-wrap: wrap; gap: 10px; max-width: 520px; margin-top: var(--space-2xl); }
 .prompt-bank button {
   border: 1px solid rgba(255,255,255,.15); border-radius: 999px; background: rgba(8,8,10,.42); color: rgba(233,233,236,.8);
-  padding: 8px 10px; cursor: pointer; font: inherit; font-size: 10px; transition: border-color .2s, background .2s, transform .2s;
+  padding: 9px 14px; cursor: pointer; font: inherit; font-size: 10px; transition: border-color .2s, background .2s, transform .2s;
 }
 .prompt-bank button:hover { border-color: rgba(216,206,187,.7); background: rgba(216,206,187,.12); transform: translateY(-1px); }
 
@@ -99,6 +110,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   position: fixed; top: 14px; right: 18px;
   display: flex; gap: 6px; align-items: center;
   z-index: 8;
+  transition: opacity .55s ease, transform .7s cubic-bezier(.16,1,.3,1);
 }
 #q {
   width: 260px; background: rgba(16, 16, 20, 0.7); border: 1px solid var(--line);
@@ -117,6 +129,36 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 #go:hover { border-color: rgba(255,255,255,0.35); color: #fff; }
 #go:disabled { cursor: wait; opacity: 0.5; }
 #go.busy { animation: pulse 0.9s ease-in-out infinite; }
+#shuffle {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 37px; padding: 8px 11px;
+  border: 1px solid var(--line); border-radius: 2px; background: rgba(16,16,20,.7);
+  color: rgba(233,233,236,.72); cursor: pointer; backdrop-filter: blur(10px);
+  font: inherit; font-size: 9px; letter-spacing: .08em; text-transform: uppercase;
+  transition: color .2s, border-color .2s, background .2s;
+}
+#shuffle:hover { color: var(--ink); border-color: rgba(216,206,187,.58); background: rgba(216,206,187,.09); }
+#shuffle:disabled { cursor: wait; }
+#shuffle.is-random { color: var(--signal); border-color: rgba(216,206,187,.38); }
+.shuffle-mark { display: inline-block; color: var(--signal); font-size: 15px; line-height: 1; transform-origin: 50% 50%; }
+#shuffle.is-moving .shuffle-mark { animation: shuffle-turn 1.2s cubic-bezier(.65,0,.35,1) infinite; }
+@keyframes shuffle-turn { to { transform: rotate(360deg); } }
+
+#ar-link {
+  position: fixed;
+  top: 20px;
+  left: 116px;
+  z-index: 21;
+  color: rgba(216,206,187,.68);
+  border-bottom: 1px solid rgba(216,206,187,.25);
+  padding: 5px 0;
+  font: 10px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color .25s ease, border-color .25s ease;
+}
+#ar-link:hover { color: var(--ink); border-color: var(--ink); }
+#ar-link span { color: var(--signal); }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 .status { color: var(--dim); font-size: 10px; white-space: nowrap; max-width: 120px; }
 
@@ -141,6 +183,17 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 }
 #guide-toggle::after { content: " ?"; color: var(--signal); }
 #guide-toggle:hover { color: var(--ink); }
+
+/* The arrival has one interaction mode. Peripheral controls resolve after entry. */
+body:not(.has-entered) #search,
+body:not(.has-entered) #ar-link,
+body:not(.has-entered) #sound-toggle,
+body:not(.has-entered) #guide-toggle,
+body:not(.has-entered) #legend {
+  opacity: 0;
+  pointer-events: none;
+}
+body:not(.has-entered) #search { transform: translateY(-8px); }
 #field-guide {
   position: fixed; z-index: 12; right: 18px; bottom: 48px; width: min(348px, calc(100vw - 36px));
   padding: 23px 24px 21px; border: 1px solid rgba(255,255,255,.16); border-radius: 4px;
@@ -160,8 +213,10 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 
 /* --- result count, sits just above the matches strip ------------------ */
 #result-count {
-  position: fixed; bottom: 108px; left: 0; right: 0; z-index: 6;
-  text-align: center; color: var(--dim); font-size: 11px; letter-spacing: 0.04em;
+  position: fixed; top: 62px; right: 20px; z-index: 9;
+  padding: 6px 9px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
+  background: rgba(12,12,15,.48); backdrop-filter: blur(14px) saturate(1.15);
+  text-align: right; color: rgba(233,233,236,.76); font-size: 10px; letter-spacing: 0.04em;
   pointer-events: none;
 }
 #result-count[hidden] { display: none; }
@@ -205,14 +260,14 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 /* --- artwork card — fixed panel on the right, always in the same place
    so it never gets cut off by the viewport or the results strip ------- */
 #card {
-  position: fixed; top: 78px; right: 18px; bottom: 132px;
-  width: 300px;
-  background: linear-gradient(145deg, rgba(25,24,28,.96), rgba(9,9,12,.94)); border: 1px solid rgba(255,255,255,0.18);
-  backdrop-filter: blur(20px); border-radius: 4px; z-index: 7;
-  padding: 18px 20px 19px;
+  position: fixed; top: 94px; right: 18px;
+  width: min(320px, calc(100vw - 36px)); max-height: min(430px, calc(100vh - 230px));
+  background: linear-gradient(145deg, rgba(26,25,30,.72), rgba(8,8,11,.58)); border: 1px solid rgba(255,255,255,.2);
+  backdrop-filter: blur(24px) saturate(1.18); border-radius: 14px; z-index: 7;
+  padding: 19px 21px 20px;
   pointer-events: auto;
   overflow-y: auto;
-  box-shadow: 0 14px 48px rgba(0, 0, 0, 0.75);
+  box-shadow: 0 18px 58px rgba(0,0,0,.48), inset 0 1px rgba(255,255,255,.06);
   animation: rise 0.18s ease;
 }
 @keyframes rise { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
@@ -270,16 +325,19 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   #arrival.is-dismissed { transform: translateY(10px); }
   .eyebrow { margin-bottom: 15px; font-size: 8px; }
   #arrival h1 { font-size: clamp(66px, 20vw, 96px); }
-  .arrival-copy { margin: 25px 0 18px; font-size: 16px; }
-  .prompt-bank { margin-top: 20px; }
+  .arrival-copy { margin: 32px 0 24px; font-size: 16px; }
+  .prompt-bank { margin-top: 32px; }
   .prompt-bank button { padding: 7px 9px; }
-  .arrival-note { display: none; }
-  #card { left: 12px; right: 12px; width: auto; top: 70px; bottom: 128px; }
+  #card { left: 12px; right: 12px; width: auto; top: 94px; max-height: calc(100vh - 235px); }
   #met-logo-link { top: 12px; left: 12px; }
   #met-logo { height: 42px; }
   #search { top: 11px; right: 12px; }
-  #q { width: 170px; }
-  #q:focus { width: 200px; }
+  #ar-link { top: 64px; left: 14px; }
+  #result-count { top: 60px; right: 12px; }
+  #q { width: 140px; }
+  #q:focus { width: 155px; }
+  #shuffle { width: 38px; padding: 8px; justify-content: center; }
+  .shuffle-label, #search .status { display: none; }
   #sound-toggle { left: 12px; bottom: 12px; }
   #share-view { right: 108px; bottom: 12px; }
   #guide-toggle { right: 12px; bottom: 12px; }

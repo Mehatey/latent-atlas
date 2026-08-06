@@ -42,6 +42,8 @@ const arrival = $("#arrival") as HTMLElement;
 const enterBtn = $("#enter") as HTMLButtonElement;
 const promptButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-query]")];
 const soundToggle = $("#sound-toggle") as HTMLButtonElement;
+const shuffleButton = $("#shuffle") as HTMLButtonElement;
+const shuffleLabel = shuffleButton.querySelector(".shuffle-label") as HTMLElement;
 const shareView = $("#share-view") as HTMLButtonElement;
 const guideToggle = $("#guide-toggle") as HTMLButtonElement;
 const fieldGuide = $("#field-guide") as HTMLElement;
@@ -53,6 +55,8 @@ const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let data: Atlas;
 let embeddings: Float32Array;        // count × dim, L2-normalised
 let positions: THREE.Vector3[] = [];
+let atlasPositions: THREE.Vector3[] = [];
+let positionAttr: THREE.InstancedBufferAttribute;
 let scoreAttr: THREE.InstancedBufferAttribute;
 let heroAttr: THREE.InstancedBufferAttribute;   // 1 = the focused work (shown big), 0 = a point
 let pointCloud: THREE.Mesh;          // every work as a glowing dot, revealed on search
@@ -103,6 +107,20 @@ let hasEntered = false;
 let navigationTimer = 0;
 let guideReturnFocus: HTMLElement | null = null;
 let searchToken = 0;
+type Arrangement = "semantic" | "shuffling" | "random" | "restoring";
+type LayoutMotion = {
+  from: Float32Array;
+  to: Float32Array;
+  startedAt: number;
+  duration: number;
+  completesAs: Arrangement;
+  resolve: () => void;
+};
+let arrangement: Arrangement = "semantic";
+let layoutMotion: LayoutMotion | null = null;
+type ShuffleForm = "orbit" | "helix" | "wave";
+const shuffleForms: ShuffleForm[] = ["orbit", "helix", "wave"];
+let lastShuffleForm: ShuffleForm | null = null;
 
 // card state: which work is shown, and whether it's sticky (click/search vs hover)
 let cardIndex = -1;
@@ -266,7 +284,10 @@ function buildPoints(tex: THREE.Texture) {
     positions[i].x += hash(i, 1) * jit;
     positions[i].y += hash(i, 2) * jit;
     positions[i].z += hash(i, 3) * jit;
+    // Give each local cluster slightly more breathing room without changing its meaning.
+    positions[i].sub(c0).multiplyScalar(1.08).add(c0);
   }
+  atlasPositions = positions.map((p) => p.clone());
 
   // centroid + 93rd-percentile radius for framing
   sceneCenter.set(0, 0, 0);
@@ -283,6 +304,7 @@ function buildPoints(tex: THREE.Texture) {
   // shared instance attributes — the image mesh and the point-cloud mesh read the same
   // positions / scores / hero flag, so one needsUpdate keeps both in sync.
   const posAttr = new THREE.InstancedBufferAttribute(iPos, 3);
+  positionAttr = posAttr;
   scoreAttr = new THREE.InstancedBufferAttribute(scores, 1);
   heroAttr = new THREE.InstancedBufferAttribute(new Float32Array(n), 1);
   geo.setAttribute("iPos", posAttr);
@@ -336,18 +358,26 @@ function buildPoints(tex: THREE.Texture) {
 
   uBase.value = Math.max(sceneRadius * 0.017, 1.0);
   const dist = sceneRadius / Math.sin((camera.fov * Math.PI) / 360) * 0.62; // start in closer, among the works
-  camera.position.copy(sceneCenter).add(new THREE.Vector3(0, 0, dist));
-  controls.target.copy(sceneCenter);
-  controls.minDistance = sceneRadius * 0.05;
-  controls.maxDistance = dist * 2.2;
+  // Compose the initial field around the arrival copy: yaw the view and aim left of the
+  // collection centroid so its visual mass settles on the right, leaving a calm text field.
+  const introYaw = 0.38;
+  homeTarget = sceneCenter.clone().add(new THREE.Vector3(-sceneRadius * 0.28, sceneRadius * 0.02, 0));
+  const homeOffset = new THREE.Vector3(
+    Math.sin(introYaw) * dist,
+    sceneRadius * 0.08,
+    Math.cos(introYaw) * dist,
+  );
+  camera.position.copy(homeTarget).add(homeOffset);
+  controls.target.copy(homeTarget);
+  controls.minDistance = sceneRadius * 0.002;
+  controls.maxDistance = dist * 8;
   controls.update();
   homePos = camera.position.clone();
-  homeTarget = sceneCenter.clone();
   uFogNear.value = dist - sceneRadius;
   uFogFar.value = dist + sceneRadius * 1.4;
 
   // intro: start pulled straight back, then ease into the framed view
-  camera.position.copy(sceneCenter).add(new THREE.Vector3(0, 0, dist * 1.9));
+  camera.position.copy(homeTarget).add(homeOffset.clone().multiplyScalar(1.65));
   flyTarget = { pos: homePos.clone(), look: homeTarget.clone() };
 
   texLoader = new THREE.TextureLoader();
@@ -843,7 +873,7 @@ function bindInput() {
     }
   });
 
-  guideToggle.addEventListener("click", () => setGuideOpen(fieldGuide.hidden));
+  guideToggle.addEventListener("click", () => setGuideOpen(fieldGuide.hasAttribute("hidden")));
   guideClose.addEventListener("click", () => setGuideOpen(false));
   cardSimilar.addEventListener("click", () => {
     if (cardIndex < 0) return;
@@ -853,18 +883,22 @@ function bindInput() {
 
   navPrev.addEventListener("click", () => navStep(-1));
   navNext.addEventListener("click", () => navStep(1));
+  shuffleButton.addEventListener("click", () => { void shuffleField(); });
 
   qInput.addEventListener("focus", () => { dismissArrival(); stopPlaceholderTypewriter(); });
   qInput.addEventListener("input", () => { if (qInput.value) stopPlaceholderTypewriter(); });
   qInput.addEventListener("blur", () => { if (!qInput.value) startPlaceholderTypewriter(); });
 
-  // keyboard: ← → for result navigation, Esc to reset
+  // keyboard: ← → for result navigation, S to shuffle, Esc to reset
   addEventListener("keydown", (e) => {
     if (e.key === "Escape") { setGuideOpen(false); resetView(); }
-    if (e.key === "?" && document.activeElement !== qInput) setGuideOpen(fieldGuide.hidden);
+    if (e.key === "?" && document.activeElement !== qInput) setGuideOpen(fieldGuide.hasAttribute("hidden"));
     if (document.activeElement !== qInput) {
       if (e.key === "ArrowRight") navStep(1);
       if (e.key === "ArrowLeft")  navStep(-1);
+      if (!e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === "s" && !shuffleButton.disabled) {
+        void shuffleField();
+      }
     }
   });
 }
@@ -885,6 +919,7 @@ function setGuideOpen(open: boolean) {
 function dismissArrival() {
   if (hasEntered) return;
   hasEntered = true;
+  document.body.classList.add("has-entered");
   arrival.classList.add("is-dismissed");
 }
 
@@ -905,7 +940,7 @@ function setViewUrl(view: { q?: string; work?: number } = {}) {
   shareView.hidden = !view.q && !view.work;
 }
 
-function resetView() {
+function resetView(restoreArrangement = true) {
   searchToken++;
   const scores = scoreAttr.array as Float32Array;
   scores.fill(0);
@@ -927,7 +962,161 @@ function resetView() {
   navPrev.hidden = true;
   navNext.hidden = true;
   flyTarget = { pos: homePos.clone(), look: homeTarget.clone() };
+  if (restoreArrangement) void restoreSemanticLayout();
   setViewUrl();
+}
+
+function setShuffleState(next: Arrangement) {
+  arrangement = next;
+  const moving = next === "shuffling" || next === "restoring";
+  shuffleButton.disabled = moving;
+  shuffleButton.classList.toggle("is-moving", moving);
+  shuffleButton.classList.toggle("is-random", next === "random");
+  shuffleButton.setAttribute("aria-busy", String(moving));
+  shuffleButton.setAttribute(
+    "aria-label",
+    next === "random" ? "Shuffle artwork positions again" :
+    next === "restoring" ? "Restoring semantic atlas" :
+    next === "shuffling" ? "Shuffling artwork positions" :
+    "Shuffle artwork positions",
+  );
+  shuffleLabel.textContent =
+    next === "random" ? "shuffle again" :
+    next === "restoring" ? "restoring" :
+    next === "shuffling" ? "shuffling" :
+    "shuffle field";
+}
+
+function animateLayout(targets: THREE.Vector3[], duration: number, completesAs: Arrangement): Promise<void> {
+  layoutMotion?.resolve();
+  const n = positions.length;
+  const from = new Float32Array(n * 3);
+  const to = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    from[i * 3] = positions[i].x;
+    from[i * 3 + 1] = positions[i].y;
+    from[i * 3 + 2] = positions[i].z;
+    to[i * 3] = targets[i].x;
+    to[i * 3 + 1] = targets[i].y;
+    to[i * 3 + 2] = targets[i].z;
+  }
+
+  setShuffleState(completesAs === "random" ? "shuffling" : "restoring");
+  return new Promise((resolve) => {
+    layoutMotion = {
+      from,
+      to,
+      startedAt: performance.now(),
+      duration: reducedMotion ? 0 : duration,
+      completesAs,
+      resolve,
+    };
+  });
+}
+
+function updateLayoutMotion(now: number) {
+  if (!layoutMotion) return;
+  const motion = layoutMotion;
+  const progress = motion.duration === 0 ? 1 : Math.min((now - motion.startedAt) / motion.duration, 1);
+  // Smootherstep keeps thousands of rectangles flowing without a hard launch or stop.
+  const eased = progress * progress * progress * (progress * (progress * 6 - 15) + 10);
+  for (let i = 0; i < positions.length; i++) {
+    const o = i * 3;
+    positions[i].set(
+      motion.from[o] + (motion.to[o] - motion.from[o]) * eased,
+      motion.from[o + 1] + (motion.to[o + 1] - motion.from[o + 1]) * eased,
+      motion.from[o + 2] + (motion.to[o + 2] - motion.from[o + 2]) * eased,
+    );
+    positionAttr.setXYZ(i, positions[i].x, positions[i].y, positions[i].z);
+  }
+  positionAttr.needsUpdate = true;
+  if (progress < 1) return;
+
+  layoutMotion = null;
+  setShuffleState(motion.completesAs);
+  motion.resolve();
+}
+
+function restoreSemanticLayout(): Promise<void> {
+  if (arrangement === "semantic" && !layoutMotion) return Promise.resolve();
+  return animateLayout(atlasPositions, 900, "semantic");
+}
+
+function makeShuffleTargets(form: ShuffleForm, order: number[]): THREE.Vector3[] {
+  const n = order.length;
+  const radius = sceneRadius;
+  const targetSlots = Array.from({ length: n }, (_, slot) => {
+    const t = n <= 1 ? 0 : slot / (n - 1);
+    const golden = (slot * 0.61803398875) % 1;
+    let x = 0, y = 0, z = 0;
+
+    if (form === "orbit") {
+      const theta = Math.PI * 2 * t;
+      const phi = Math.PI * 2 * golden;
+      const major = radius * 0.61;
+      const minor = radius * 0.22;
+      x = (major + minor * Math.cos(phi)) * Math.cos(theta);
+      y = minor * Math.sin(phi);
+      z = (major + minor * Math.cos(phi)) * Math.sin(theta);
+    } else if (form === "helix") {
+      const strand = slot % 2;
+      const strandT = Math.floor(slot / 2) / Math.max(1, Math.ceil(n / 2) - 1);
+      const theta = strandT * Math.PI * 10 + strand * Math.PI;
+      x = Math.cos(theta) * radius * 0.43;
+      y = (strandT - 0.5) * radius * 1.55;
+      z = Math.sin(theta) * radius * 0.29;
+    } else {
+      const columns = Math.ceil(Math.sqrt(n));
+      const row = Math.floor(slot / columns);
+      const column = slot % columns;
+      const u = columns <= 1 ? 0 : column / (columns - 1) - 0.5;
+      const rows = Math.ceil(n / columns);
+      const v = rows <= 1 ? 0 : row / (rows - 1) - 0.5;
+      x = u * radius * 1.55;
+      y = Math.sin(u * Math.PI * 3 + v * Math.PI) * radius * 0.22;
+      z = v * radius * 0.95 + Math.cos(u * Math.PI * 2) * radius * 0.08;
+    }
+
+    const jitter = radius * 0.012;
+    const jx = Math.sin(slot * 12.9898) * 43758.5453;
+    const jy = Math.sin(slot * 78.233) * 24634.6345;
+    return new THREE.Vector3(
+      sceneCenter.x + x + (jx - Math.floor(jx) - 0.5) * jitter,
+      sceneCenter.y + y + (jy - Math.floor(jy) - 0.5) * jitter,
+      sceneCenter.z + z,
+    );
+  });
+
+  const targets = new Array<THREE.Vector3>(n);
+  for (let slot = 0; slot < n; slot++) targets[order[slot]] = targetSlots[slot];
+  return targets;
+}
+
+async function shuffleField() {
+  dismissArrival();
+  setGuideOpen(false);
+  resumeAudio();
+  startAmbient();
+  playClick(0.82);
+  resetView(false);
+  hoverIndex = -1;
+  selector.visible = false;
+
+  // Sattolo's algorithm produces a random cycle with no artwork left in its old slot.
+  const order = atlasPositions.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * i);
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  const choices = shuffleForms.filter((form) => form !== lastShuffleForm);
+  const form = choices[Math.floor(Math.random() * choices.length)];
+  lastShuffleForm = form;
+  modelStatus.textContent = `forming ${form}…`;
+  await animateLayout(makeShuffleTargets(form, order), 2200, "random");
+  if (arrangement === "random") {
+    modelStatus.textContent = `${form} field`;
+    playClick(0.68);
+  }
 }
 
 const proj = new THREE.Vector3();
@@ -996,7 +1185,7 @@ function showCard(p: Point, idx: number, sticky = false) {
   cardIndex = idx;
   if (sticky) {
     cardSticky = true;
-    fetchDescription(p); // kick off AI description on click/focus
+    fetchDescription(p); // fetch the Met's own object context on click/focus
   }
   card.hidden = false;
 }
@@ -1126,7 +1315,11 @@ async function runSearch(q: string) {
   goBtn.disabled = true;
   goBtn.classList.add("busy");
   try {
-    await loadCLIP((s) => (modelStatus.textContent = s));
+    await Promise.all([
+      restoreSemanticLayout(),
+      loadCLIP((s) => (modelStatus.textContent = s)),
+    ]);
+    if (token !== searchToken) return;
     const qv = await embedText(q);
     if (token !== searchToken) return;
     const { top, order } = applyScores(qv);
@@ -1149,9 +1342,11 @@ async function runSearch(q: string) {
 }
 
 // click a work → highlight its nearest neighbours using its own image embedding
-function showSimilar(i: number) {
+async function showSimilar(i: number) {
   // A direct artwork exploration supersedes any text embedding still in flight.
-  searchToken++;
+  const token = ++searchToken;
+  await restoreSemanticLayout();
+  if (token !== searchToken) return;
   const dim = data.dim;
   const qv = embeddings.slice(i * dim, (i + 1) * dim);
   const { order } = applyScores(qv);
@@ -1174,6 +1369,7 @@ function animate() {
 function renderFrame() {
   uTime.value = clock.getElapsedTime();
   uSearch.value += (uSearchTarget - uSearch.value) * 0.08; // ease the search transition
+  updateLayoutMotion(performance.now());
 
   if (flyTarget) {
     camera.position.lerp(flyTarget.pos, 0.05);

@@ -42,6 +42,7 @@ pass (matched works glow during a search) and a vignette.
 
 - **Search by meaning** — type a phrase; CLIP's text encoder runs in your browser and the camera flies to the matches.
 - **More like this** — click any work to highlight its nearest neighbours by image-embedding similarity (no model call — it reuses the precomputed vectors).
+- **Shuffle the field** — temporarily randomize every artwork position, then watch the semantic atlas assemble again when you search.
 - **Inspect** — hover for a live detail card pulled from the Met; a selection ring marks the work under your cursor.
 - **Top-matches strip, suggested-query chips, Esc to reset**, and a gentle idle auto-rotate.
 
