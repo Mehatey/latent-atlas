@@ -106,21 +106,36 @@ const align4 = (n: number) => (n + 3) & ~3;
 const xml = (s: string) =>
   s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 
+function wrapLines(value: string, maxChars: number, maxLines = 2) {
+  const words = value.trim().split(/\s+/);
+  const lines: string[] = [];
+  for (const word of words) {
+    const current = lines.at(-1);
+    if (!current || (current.length + word.length + 1 > maxChars && lines.length < maxLines)) {
+      lines.push(word);
+    } else {
+      lines[lines.length - 1] = `${current} ${word}`;
+    }
+  }
+  return lines.slice(0, maxLines);
+}
+
 function plaqueSvg(work: Work) {
-  const title = work.title.length > 38
-    ? [work.title.slice(0, work.title.lastIndexOf(" ", 38)), work.title.slice(work.title.lastIndexOf(" ", 38) + 1)]
-    : [work.title];
+  const title = wrapLines(work.title, 31);
+  const description = wrapLines(work.description, 46);
+  const titleY = 206;
+  const metaY = title.length > 1 ? 370 : 306;
+  const ruleY = title.length > 1 ? 462 : 398;
   return Buffer.from(`
     <svg width="1100" height="760" xmlns="http://www.w3.org/2000/svg">
-      <rect x="30" y="30" width="1040" height="700" rx="56" fill="#0c0c0f" fill-opacity=".56" stroke="#f3eee4" stroke-opacity=".18" stroke-width="2"/>
-      <text x="78" y="112" fill="#cbbfa9" font-family="Arial, sans-serif" font-size="25" letter-spacing="5">LATENT ATLAS / MET OPEN ACCESS</text>
-      ${title.map((line, i) => `<text x="78" y="${210 + i * 64}" fill="#f3eee4" font-family="Georgia, serif" font-size="54">${xml(line)}</text>`).join("")}
-      <text x="78" y="${title.length > 1 ? 374 : 312}" fill="#d8cebb" font-family="Arial, sans-serif" font-size="28">${xml(work.artist)} · ${xml(work.date)}</text>
-      <text x="78" y="${title.length > 1 ? 422 : 360}" fill="#8f897f" font-family="Arial, sans-serif" font-size="24">${xml(work.medium)}</text>
-      <line x1="78" y1="${title.length > 1 ? 470 : 408}" x2="1022" y2="${title.length > 1 ? 470 : 408}" stroke="#d8cebb" stroke-opacity=".22"/>
-      <text x="78" y="${title.length > 1 ? 540 : 478}" fill="#d8cebb" font-family="Georgia, serif" font-size="31">${xml(work.description.slice(0, 58))}</text>
-      <text x="78" y="${title.length > 1 ? 588 : 526}" fill="#d8cebb" font-family="Georgia, serif" font-size="31">${xml(work.description.slice(58))}</text>
-      <text x="78" y="670" fill="#77736c" font-family="Arial, sans-serif" font-size="21" letter-spacing="2">CC0 · THE METROPOLITAN MUSEUM OF ART · OBJECT ${work.id}</text>
+      <rect x="24" y="24" width="1052" height="712" rx="44" fill="#09090c" fill-opacity=".82" stroke="#f3eee4" stroke-opacity=".34" stroke-width="2"/>
+      <text x="88" y="110" fill="#e3d8c3" font-family="Arial, sans-serif" font-size="24" font-weight="600" letter-spacing="4">LATENT ATLAS / MET OPEN ACCESS</text>
+      ${title.map((line, i) => `<text x="88" y="${titleY + i * 68}" fill="#fffaf0" font-family="Georgia, serif" font-size="60" font-weight="600">${xml(line)}</text>`).join("")}
+      <text x="88" y="${metaY}" fill="#f0e9dc" font-family="Arial, sans-serif" font-size="31" font-weight="600">${xml(work.artist)} · ${xml(work.date)}</text>
+      <text x="88" y="${metaY + 48}" fill="#c7c0b5" font-family="Arial, sans-serif" font-size="27">${xml(work.medium)}</text>
+      <line x1="88" y1="${ruleY}" x2="1012" y2="${ruleY}" stroke="#f3eee4" stroke-opacity=".28"/>
+      ${description.map((line, i) => `<text x="88" y="${ruleY + 76 + i * 48}" fill="#f0e8da" font-family="Georgia, serif" font-size="34">${xml(line)}</text>`).join("")}
+      <text x="88" y="684" fill="#b4ada3" font-family="Arial, sans-serif" font-size="20" font-weight="600" letter-spacing="2">THE MET · OPEN ACCESS / CC0 · OBJECT ${work.id}</text>
     </svg>`);
 }
 
@@ -169,7 +184,7 @@ function planeGeometry(width: number, height: number, cx: number, cy: number, z:
 async function makeGlb(work: Work, art: Buffer, plaque: Buffer, aspect: number) {
   const artHeight = aspect > 1.7 ? .7 : .9;
   const artWidth = artHeight * aspect;
-  const plaqueWidth = .61, plaqueHeight = .422, gap = .08;
+  const plaqueWidth = .76, plaqueHeight = .525, gap = .1;
   const total = artWidth + gap + plaqueWidth;
   const artX = -total / 2 + artWidth / 2;
   const plaqueX = total / 2 - plaqueWidth / 2;
@@ -252,18 +267,40 @@ async function makeGlb(work: Work, art: Buffer, plaque: Buffer, aspect: number) 
 }
 
 function usda(work: Work, g: Awaited<ReturnType<typeof makeGlb>>) {
-  const mesh = (name: string, width: number, height: number, x: number, z: number, material: string) => `
-    def Mesh "${name}" (
-      prepend apiSchemas = ["MaterialBindingAPI"]
-    ) {
-      uniform token subdivisionScheme = "none"
-      int[] faceVertexCounts = [4]
-      int[] faceVertexIndices = [0, 1, 2, 3]
-      point3f[] points = [(${x-width/2}, ${-height/2}, ${z}), (${x+width/2}, ${-height/2}, ${z}), (${x+width/2}, ${height/2}, ${z}), (${x-width/2}, ${height/2}, ${z})]
-      normal3f[] normals = [(0,0,1)]
-      uniform token normals:interpolation = "constant"
-      texCoord2f[] primvars:st = [(0,0),(1,0),(1,1),(0,1)] (interpolation = "vertex")
-      rel material:binding = </AR/${material}>
+  const artBottom = .4;
+  const plaqueBottom = .34;
+  const artY = artBottom + g.artHeight / 2;
+  const plaqueY = plaqueBottom + g.plaqueHeight / 2;
+  const left = Math.min(g.artX - g.artWidth / 2, g.plaqueX - g.plaqueWidth / 2);
+  const right = Math.max(g.artX + g.artWidth / 2, g.plaqueX + g.plaqueWidth / 2);
+  const baseWidth = right - left + .18;
+  const baseX = (left + right) / 2;
+  const mesh = (name: string, width: number, height: number, x: number, y: number, material: string, breath = false) => `
+    def Xform "${name}Rig" {
+      ${breath ? `
+      double3 xformOp:translate.timeSamples = {
+        0: (${x}, ${y}, 0), 45: (${x}, ${y + .006}, 0), 90: (${x}, ${y + .014}, 0),
+        135: (${x}, ${y + .006}, 0), 180: (${x}, ${y}, 0)
+      }
+      double3 xformOp:scale.timeSamples = {
+        0: (1,1,1), 45: (1.007,1.007,1), 90: (1.018,1.018,1),
+        135: (1.007,1.007,1), 180: (1,1,1)
+      }
+      uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]` : `
+      double3 xformOp:translate = (${x}, ${y}, 0)
+      uniform token[] xformOpOrder = ["xformOp:translate"]`}
+      def Mesh "${name}" (
+        prepend apiSchemas = ["MaterialBindingAPI"]
+      ) {
+        uniform token subdivisionScheme = "none"
+        int[] faceVertexCounts = [4]
+        int[] faceVertexIndices = [0, 1, 2, 3]
+        point3f[] points = [(${-width/2}, ${-height/2}, 0), (${width/2}, ${-height/2}, 0), (${width/2}, ${height/2}, 0), (${-width/2}, ${height/2}, 0)]
+        normal3f[] normals = [(0,0,1)]
+        uniform token normals:interpolation = "constant"
+        texCoord2f[] primvars:st = [(0,0),(1,0),(1,1),(0,1)] (interpolation = "vertex")
+        rel material:binding = </AR/${material}>
+      }
     }`;
   return `#usda 1.0
 (
@@ -275,17 +312,47 @@ function usda(work: Work, g: Awaited<ReturnType<typeof makeGlb>>) {
   timeCodesPerSecond = 30
 )
 def Xform "AR" {
-  double3 xformOp:translate.timeSamples = {
-    0: (0, 0, 0), 30: (0, .004, 0), 60: (0, .014, 0), 90: (0, .018, 0),
-    120: (0, .014, 0), 150: (0, .004, 0), 180: (0, 0, 0)
+  ${mesh("Artwork", g.artWidth, g.artHeight, g.artX, artY, "ArtworkMaterial", true)}
+  ${mesh("Label", g.plaqueWidth, g.plaqueHeight, g.plaqueX, plaqueY, "LabelMaterial")}
+  def Cube "Base" (
+    prepend apiSchemas = ["MaterialBindingAPI"]
+  ) {
+    double size = 1
+    double3 xformOp:scale = (${baseWidth}, .045, .24)
+    double3 xformOp:translate = (${baseX}, .0225, -.035)
+    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+    rel material:binding = </AR/StandMaterial>
   }
-  float xformOp:rotateY.timeSamples = {
-    0: -1.4, 30: -1.05, 60: -.35, 90: 1.4,
-    120: -.35, 150: -1.05, 180: -1.4
+  def Cylinder "ArtworkPole" (
+    prepend apiSchemas = ["MaterialBindingAPI"]
+  ) {
+    uniform token axis = "Y"
+    double radius = .018
+    double height = ${artBottom - .045}
+    double3 xformOp:translate = (${g.artX}, ${(artBottom + .045) / 2}, -.025)
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+    rel material:binding = </AR/StandMaterial>
   }
-  uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateY"]
-  ${mesh("Artwork", g.artWidth, g.artHeight, g.artX, 0, "ArtworkMaterial")}
-  ${mesh("Label", g.plaqueWidth, g.plaqueHeight, g.plaqueX, 0, "LabelMaterial")}
+  def Cylinder "LabelPole" (
+    prepend apiSchemas = ["MaterialBindingAPI"]
+  ) {
+    uniform token axis = "Y"
+    double radius = .014
+    double height = ${plaqueBottom - .045}
+    double3 xformOp:translate = (${g.plaqueX}, ${(plaqueBottom + .045) / 2}, -.025)
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+    rel material:binding = </AR/StandMaterial>
+  }
+  def Material "StandMaterial" {
+    token outputs:surface.connect = </AR/StandMaterial/Surface.outputs:surface>
+    def Shader "Surface" {
+      uniform token info:id = "UsdPreviewSurface"
+      color3f inputs:diffuseColor = (.055,.052,.048)
+      float inputs:metallic = .62
+      float inputs:roughness = .34
+      token outputs:surface
+    }
+  }
   def Material "ArtworkMaterial" {
     token outputs:surface.connect = </AR/ArtworkMaterial/Surface.outputs:surface>
     def Shader "Surface" {
