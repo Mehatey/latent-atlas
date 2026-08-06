@@ -138,7 +138,7 @@ const scans: Scan[] = [
 // Each scan is paired with a comparable object already embedded in the atlas.
 // Related cards are the nearest spatial neighbors around that anchor.
 const relatedAnchorIndices = [1118, 54, 843, 534];
-const arAssetVersion = "20260805g";
+const arAssetVersion = "20260806a";
 
 const viewer = document.querySelector("#viewer") as HTMLElement & {
   cameraOrbit?: string;
@@ -279,8 +279,8 @@ function metUrl(scan: Scan) {
 function quickLookUrl(scan: Scan) {
   const title = encodeURIComponent(scan.title);
   const subtitle = encodeURIComponent(`${scan.artist} · ${scan.date}`);
-  const action = encodeURIComponent("View at The Met");
-  const canonical = encodeURIComponent(metUrl(scan));
+  const action = encodeURIComponent("Return to Latent Atlas");
+  const canonical = encodeURIComponent(`https://mehatey.github.io/latent-atlas/?work=${scan.id}`);
   return `${path(scan, "usdz")}#allowsContentScaling=1&callToAction=${action}&checkoutTitle=${title}&checkoutSubtitle=${subtitle}&canonicalWebPageURL=${canonical}`;
 }
 
@@ -808,7 +808,7 @@ function selectScan(index: number) {
 
   window.setTimeout(() => {
     viewer.setAttribute("src", path(scan, "glb"));
-    viewer.setAttribute("ios-src", path(scan, "usdz"));
+    viewer.setAttribute("ios-src", quickLookUrl(scan));
     viewer.setAttribute("poster", path(scan, "jpg"));
     viewer.setAttribute("alt", `Interactive 3D model of ${scan.title}`);
     viewer.setAttribute("camera-orbit", scan.orbit);
@@ -972,11 +972,15 @@ document.addEventListener("keydown", (event) => {
   revealStageUi();
 });
 
-launch.addEventListener("message", (event: Event) => {
+const handleQuickLookAction = (event: Event) => {
   if ((event as MessageEvent).data === "_apple_ar_quicklook_button_tapped") {
-    window.location.href = metUrl(scans[current]);
+    window.location.href = `./?work=${scans[current].id}`;
   }
-});
+};
+
+launch.addEventListener("message", handleQuickLookAction);
+stageQuickLook.addEventListener("message", handleQuickLookAction);
+viewer.addEventListener("message", handleQuickLookAction);
 
 document.addEventListener("visibilitychange", () => {
   if (!arSessionStarted) return;
@@ -1026,7 +1030,7 @@ viewer.addEventListener("error", () => {
 
 const params = new URLSearchParams(location.search);
 const requested = scans.findIndex((scan) => scan.slug === params.get("work"));
-if (requested >= 0) selectScan(requested);
+selectScan(requested >= 0 ? requested : 0);
 
 if (params.get("intro") === "0") {
   intro.hidden = true;

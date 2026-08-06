@@ -11,6 +11,11 @@ type Work = {
   description: string;
   source: string;
   slug: string;
+  related?: Array<{
+    id: number;
+    title: string;
+    source: string;
+  }>;
 };
 
 const root = path.resolve("public/ar");
@@ -29,6 +34,11 @@ const works: Work[] = [
     medium: "Oil on canvas",
     description: "A panoramic landscape compressing tropical ecologies into one imagined journey.",
     source: "https://images.metmuseum.org/CRDImages/ad/original/DT78.jpg",
+    related: [
+      { id: 11310, title: "Hudson River Scene", source: "https://images.metmuseum.org/CRDImages/ad/web-large/DT2891.jpg" },
+      { id: 10769, title: "A River Glimpse", source: "https://images.metmuseum.org/CRDImages/ad/web-large/ap95.17.2.jpg" },
+      { id: 720026, title: "Landscape", source: "https://images.metmuseum.org/CRDImages/dp/web-large/DP874662.jpg" },
+    ],
   },
   {
     id: 436532,
@@ -39,6 +49,11 @@ const works: Work[] = [
     medium: "Oil on canvas",
     description: "Directional strokes turn the artist’s face into a field of color and motion.",
     source: "https://images.metmuseum.org/CRDImages/ep/original/DT1502_cropped2.jpg",
+    related: [
+      { id: 437838, title: "Woman in Garden", source: "https://images.metmuseum.org/CRDImages/ep/web-large/DP124056.jpg" },
+      { id: 436525, title: "Bouquet of Flowers", source: "https://images.metmuseum.org/CRDImages/ep/web-large/DT7098.jpg" },
+      { id: 436121, title: "Woman Seated", source: "https://images.metmuseum.org/CRDImages/ep/web-large/DP-25460-001.jpg" },
+    ],
   },
   {
     id: 435904,
@@ -49,6 +64,11 @@ const works: Work[] = [
     medium: "Oil on wood",
     description: "A vanitas: time, knowledge, and mortality held inside a small frame.",
     source: "https://images.metmuseum.org/CRDImages/ep/original/DP145929.jpg",
+    related: [
+      { id: 436485, title: "Vanitas Still Life", source: "https://images.metmuseum.org/CRDImages/ep/web-large/DP143209.jpg" },
+      { id: 438376, title: "Still Life with Oysters", source: "https://images.metmuseum.org/CRDImages/ep/web-large/DP120415.jpg" },
+      { id: 438543, title: "Still Life with Shells", source: "https://images.metmuseum.org/CRDImages/ep/web-large/DP-25756-001.jpg" },
+    ],
   },
   {
     id: 250945,
@@ -59,6 +79,11 @@ const works: Work[] = [
     medium: "Fresco",
     description: "Myth unfolds inside a Roman landscape painted for an imperial villa.",
     source: "https://images.metmuseum.org/CRDImages/gr/original/DP138761.jpg",
+    related: [
+      { id: 250946, title: "Polyphemus and Galatea", source: "https://images.metmuseum.org/CRDImages/gr/web-large/DP138763.jpg" },
+      { id: 335112, title: "Landscape", source: "https://images.metmuseum.org/CRDImages/dp/web-large/DP801186.jpg" },
+      { id: 40426, title: "Landscape", source: "https://images.metmuseum.org/CRDImages/as/web-large/DP-44705-002.jpg" },
+    ],
   },
   {
     id: 435882,
@@ -69,6 +94,11 @@ const works: Work[] = [
     medium: "Oil on canvas",
     description: "Apples, cloth, and flowers become a study in unstable perspective and balanced weight.",
     source: "https://images.metmuseum.org/CRDImages/ep/original/DT47.jpg",
+    related: [
+      { id: 437999, title: "Still Life with Teapot and Fruit", source: "https://images.metmuseum.org/CRDImages/ep/web-large/DT1027.jpg" },
+      { id: 435884, title: "Still Life with Jar, Cup, and Apples", source: "https://images.metmuseum.org/CRDImages/ep/web-large/DP130322.jpg" },
+      { id: 435881, title: "Still Life with a Ginger Jar and Eggplants", source: "https://images.metmuseum.org/CRDImages/ep/web-large/DP-20100-001.jpg" },
+    ],
   },
   {
     id: 437397,
@@ -89,6 +119,11 @@ const works: Work[] = [
     medium: "Oil on canvas",
     description: "A turning mass of horses and handlers makes physical force visible across the canvas.",
     source: "https://images.metmuseum.org/CRDImages/ep/original/DP-23550-001.jpg",
+    related: [
+      { id: 437518, title: "A River in a Meadow", source: "https://images.metmuseum.org/CRDImages/ep/web-large/DP-15888-001.jpg" },
+      { id: 437536, title: "Wolf and Fox Hunt", source: "https://images.metmuseum.org/CRDImages/ep/web-large/DP-27136-001.jpg" },
+      { id: 437526, title: "A Forest at Dawn with a Deer Hunt", source: "https://images.metmuseum.org/CRDImages/ep/web-large/DP-25739-001.jpg" },
+    ],
   },
   {
     id: 11951,
@@ -266,7 +301,7 @@ async function makeGlb(work: Work, art: Buffer, plaque: Buffer, aspect: number) 
   return { artWidth, artHeight, artX, plaqueWidth, plaqueHeight, plaqueX };
 }
 
-function usda(work: Work, g: Awaited<ReturnType<typeof makeGlb>>) {
+function usda(work: Work, g: Awaited<ReturnType<typeof makeGlb>>, relatedAspects: number[]) {
   const artBottom = .4;
   const plaqueBottom = .34;
   const artY = artBottom + g.artHeight / 2;
@@ -275,6 +310,7 @@ function usda(work: Work, g: Awaited<ReturnType<typeof makeGlb>>) {
   const right = Math.max(g.artX + g.artWidth / 2, g.plaqueX + g.plaqueWidth / 2);
   const baseWidth = right - left + .18;
   const baseX = (left + right) / 2;
+  const fieldY = Math.max(artY + g.artHeight / 2, plaqueY + g.plaqueHeight / 2) + .16;
   const mesh = (name: string, width: number, height: number, x: number, y: number, material: string, breath = false) => `
     def Xform "${name}Rig" {
       ${breath ? `
@@ -296,12 +332,82 @@ function usda(work: Work, g: Awaited<ReturnType<typeof makeGlb>>) {
         int[] faceVertexCounts = [4]
         int[] faceVertexIndices = [0, 1, 2, 3]
         point3f[] points = [(${-width/2}, ${-height/2}, 0), (${width/2}, ${-height/2}, 0), (${width/2}, ${height/2}, 0), (${-width/2}, ${height/2}, 0)]
-        normal3f[] normals = [(0,0,1)]
-        uniform token normals:interpolation = "constant"
+        normal3f[] normals = [(0,0,1)] ( interpolation = "constant" )
         texCoord2f[] primvars:st = [(0,0),(1,0),(1,1),(0,1)] (interpolation = "vertex")
         rel material:binding = </AR/${material}>
       }
     }`;
+  const relatedCards = relatedAspects.map((aspect, index) => {
+    const width = Math.min(.23, .17 * aspect);
+    const height = width / aspect;
+    return `
+    def Xform "RelatedRig${index + 1}" {
+      double3 xformOp:translate = (${baseX}, ${fieldY - .08}, -.08)
+      double3 xformOp:scale = (.001, .001, .001)
+      uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+      def Mesh "Related${index + 1}" (
+        prepend apiSchemas = ["MaterialBindingAPI"]
+      ) {
+        uniform token subdivisionScheme = "none"
+        int[] faceVertexCounts = [4]
+        int[] faceVertexIndices = [0, 1, 2, 3]
+        point3f[] points = [(${-width / 2}, ${-height / 2}, 0), (${width / 2}, ${-height / 2}, 0), (${width / 2}, ${height / 2}, 0), (${-width / 2}, ${height / 2}, 0)]
+        normal3f[] normals = [(0,0,1)] ( interpolation = "constant" )
+        texCoord2f[] primvars:st = [(0,0),(1,0),(1,1),(0,1)] (interpolation = "vertex")
+        rel material:binding = </AR/RelatedMaterial${index + 1}>
+      }
+    }
+    def Xform "RelatedTarget${index + 1}" {
+      double3 xformOp:translate = (${baseX + (index - 1) * .27}, ${fieldY + (index === 1 ? .035 : 0)}, ${-.055 - Math.abs(index - 1) * .025})
+      double3 xformOp:scale = (1, 1, 1)
+      uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+    }`;
+  }).join("");
+  const relatedMaterials = relatedAspects.map((_, index) => `
+  def Material "RelatedMaterial${index + 1}" {
+    token outputs:surface.connect = </AR/RelatedMaterial${index + 1}/Surface.outputs:surface>
+    def Shader "Surface" {
+      uniform token info:id = "UsdPreviewSurface"
+      color3f inputs:diffuseColor.connect = </AR/RelatedMaterial${index + 1}/Texture.outputs:rgb>
+      float inputs:roughness = .78
+      token outputs:surface
+    }
+    def Shader "Texture" {
+      uniform token info:id = "UsdUVTexture"
+      asset inputs:file = @related-${index + 1}.jpg@
+      float2 inputs:st.connect = </AR/RelatedMaterial${index + 1}/ST.outputs:result>
+      token outputs:rgb
+    }
+    def Shader "ST" {
+      uniform token info:id = "UsdPrimvarReader_float2"
+      string inputs:varname = "st"
+      float2 outputs:result
+    }
+  }`).join("");
+  const particles = Array.from({ length: 14 }, (_, index) => {
+    const angle = (Math.PI * 2 * index) / 14;
+    const radius = baseWidth * (.31 + (index % 3) * .045);
+    const x = baseX + Math.cos(angle) * radius;
+    const z = -.02 + Math.sin(angle) * .19;
+    const y = .095 + (index % 4) * .032;
+    const size = .006 + (index % 3) * .0025;
+    return `
+    def Sphere "Point${index + 1}" (
+      prepend apiSchemas = ["MaterialBindingAPI"]
+    ) {
+      double radius = ${size}
+      double3 xformOp:translate = (${x}, ${y}, ${z})
+      uniform token[] xformOpOrder = ["xformOp:translate"]
+      rel material:binding = </AR/LightMaterial>
+    }`;
+  }).join("");
+  const relatedTransforms = relatedAspects.map((_, index) => `
+      def Preliminary_Action "RevealRelated${index + 1}" ( inherits = </TransformAction> ) {
+        rel affectedObjects = [ </AR/RelatedRig${index + 1}> ]
+        rel xformTarget = </AR/RelatedTarget${index + 1}>
+        double duration = 1.15
+      }`).join("");
+  const relatedActionRefs = relatedAspects.map((_, index) => `<RevealRelated${index + 1}>`).join(", ");
   return `#usda 1.0
 (
   defaultPrim = "AR"
@@ -314,6 +420,12 @@ function usda(work: Work, g: Awaited<ReturnType<typeof makeGlb>>) {
 def Xform "AR" {
   ${mesh("Artwork", g.artWidth, g.artHeight, g.artX, artY, "ArtworkMaterial", true)}
   ${mesh("Label", g.plaqueWidth, g.plaqueHeight, g.plaqueX, plaqueY, "LabelMaterial")}
+  ${relatedCards}
+  def Xform "ConstellationRing" {
+    double xformOp:rotateY.timeSamples = { 0: 0, 180: 360 }
+    uniform token[] xformOpOrder = ["xformOp:rotateY"]
+    ${particles}
+  }
   def Cube "Base" (
     prepend apiSchemas = ["MaterialBindingAPI"]
   ) {
@@ -350,6 +462,16 @@ def Xform "AR" {
       color3f inputs:diffuseColor = (.055,.052,.048)
       float inputs:metallic = .62
       float inputs:roughness = .34
+      token outputs:surface
+    }
+  }
+  def Material "LightMaterial" {
+    token outputs:surface.connect = </AR/LightMaterial/Surface.outputs:surface>
+    def Shader "Surface" {
+      uniform token info:id = "UsdPreviewSurface"
+      color3f inputs:diffuseColor = (.77,.92,.30)
+      color3f inputs:emissiveColor = (.14,.20,.04)
+      float inputs:roughness = .24
       token outputs:surface
     }
   }
@@ -396,6 +518,30 @@ def Xform "AR" {
       float2 outputs:result
     }
   }
+  ${relatedMaterials}
+  def Preliminary_Behavior "ArtworkInteraction" {
+    rel triggers = [ <TapArtwork> ]
+    rel actions = [ <Response> ]
+    def Preliminary_Trigger "TapArtwork" ( inherits = </TapGestureTrigger> ) {
+      rel affectedObjects = [ </AR/ArtworkRig/Artwork> ]
+    }
+    def Preliminary_Action "Response" ( inherits = </GroupAction> ) {
+      uniform token type = "parallel"
+      rel actions = [ <SpinArtwork>${relatedActionRefs ? `, ${relatedActionRefs}` : ""}, <PlayCue> ]
+    }
+    def Preliminary_Action "SpinArtwork" ( inherits = </SpinAction> ) {
+      rel affectedObjects = [ </AR/ArtworkRig> ]
+      uniform vector3d axis = (0, 1, 0)
+      double duration = 1.8
+      double revolutions = 1
+    }
+    ${relatedTransforms}
+    def Preliminary_Action "PlayCue" ( inherits = </AudioAction> ) {
+      uniform asset audio = @interaction.m4a@
+      double gain = .28
+      uniform token auralMode = "spatial"
+    }
+  }
 }`;
 }
 
@@ -429,9 +575,21 @@ for (const work of works) {
   const g = await makeGlb(work, art, plaque, metadata.width / metadata.height);
   const staging = path.join(sourceDir, work.slug);
   await mkdir(staging, { recursive: true });
-  await writeFile(path.join(staging, "scene.usda"), usda(work, g));
+  const related = await Promise.all((work.related ?? []).map(async (neighbor, index) => {
+    const relatedResponse = await fetch(neighbor.source);
+    if (!relatedResponse.ok) throw new Error(`Could not fetch ${neighbor.source}: ${relatedResponse.status}`);
+    const source = Buffer.from(await relatedResponse.arrayBuffer());
+    const image = sharp(source).rotate().resize({ width: 720, height: 720, fit: "inside", withoutEnlargement: true });
+    const info = await image.metadata();
+    if (!info.width || !info.height) throw new Error(`No dimensions for related work ${neighbor.id}`);
+    const buffer = await image.jpeg({ quality: 88, chromaSubsampling: "4:4:4" }).toBuffer();
+    await writeFile(path.join(staging, `related-${index + 1}.jpg`), buffer);
+    return info.width / info.height;
+  }));
+  await writeFile(path.join(staging, "scene.usda"), usda(work, g, related));
   await writeFile(path.join(staging, "artwork.jpg"), art);
   await writeFile(path.join(staging, "label.png"), plaque);
+  await copyFile(path.resolve("public/ar/audio/interaction.m4a"), path.join(staging, "interaction.m4a"));
 }
 
 await writeFile(path.join(root, "works.json"), JSON.stringify(works, null, 2));
